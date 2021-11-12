@@ -28,7 +28,7 @@ class MyThread(Thread):
         # connect to the robot
         self.robot = ChalkBot("10.0.4.99")
         # reset orientation
-        self.orientation = self.robot.server.orientation()
+        self.orientation = self.robot.orientation()
 
     def run(self):
         while not self.stopped.wait(0.1):
@@ -46,13 +46,13 @@ class MyThread(Thread):
         # rotation: absolute orientation control
         angle_step = 5.0
         self.orientation += self.left*angle_step - self.right*angle_step
-        self.robot.server.drive_imu(self.velocity, self.orientation/180.0*math.pi, self.p*255, 1000)
+        self.robot.drive_imu(self.velocity, self.orientation/180.0*math.pi, self.p*255, 1000)
         
         # rotation: relative speed control (open loop)
         '''
         angle_speed = 64 # PWM
         rotation_velocity = (self.left - self.right) * angle_speed
-        self.robot.server.drive(self.velocity, int(rotation_velocity), self.p*255, 1000)
+        self.robot.drive(self.velocity, int(rotation_velocity), self.p*255, 1000)
         '''
         
         print("{};{};{}".format(self.velocity, self.orientation, self.p*255))

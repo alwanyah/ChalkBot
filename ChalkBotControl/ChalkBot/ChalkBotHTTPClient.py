@@ -15,12 +15,16 @@ class ChalkBotHTTPClient:
             print("  URL: {}".format(url))
             print("  DATA: {}".format(data))
             
-        r = requests.post(url, data = data)
+        try:
+            r = requests.post(url, data = data, timeout=1.5)
+        except requests.Timeout:
+            raise Exception("ChalkBot request timed out {}".format(url))
         
         if self.verbose:
             print("  RESPONSE: {};{};{}".format(r.status_code, r.reason, r.text) )
         
         return r.text
+
 
     def debug(self, code):
         return self.send("debug", "{}".format(code))

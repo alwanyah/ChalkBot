@@ -6,7 +6,7 @@ class ChalkBotCMD(cmd.Cmd):
     intro = 'Welcome to the ChalkBot shell.   Type help or ? to list commands.\n'
     prompt = '(chalkbot) '
     file = None
-    robot = ChalkBot("192.168.178.58")
+    robot = ChalkBot("10.0.4.99") # default address
 
     # ----- basic commands -----
     def do_connect(self, arg):
@@ -17,10 +17,10 @@ class ChalkBotCMD(cmd.Cmd):
         'Print robot status: status'
         
         print("ChalkBot Status: ")
-        print("  MOTION:      {}".format( self.robot.server.status() ))
-        print("  IMU STATE:   {}".format( self.robot.server.status_imu() ))
-        print("  ORIENTATION: {}".format( self.robot.server.orientation() ))
-        print("  POSE:        {}".format( self.robot.server.pose() ))
+        print("  MOTION:      {}".format( self.robot.status() ))
+        print("  IMU STATE:   {}".format( self.robot.status_imu() ))
+        print("  ORIENTATION: {}".format( self.robot.orientation() ))
+        print("  POSE:        {}".format( self.robot.pose() ))
         
     def do_exit(self, arg):
         'Exit ChalkBot command line'
@@ -36,7 +36,14 @@ class ChalkBotCMD(cmd.Cmd):
         'Playback commands from a file:  PLAYBACK rose.cmd'
         self.close()
         with open(arg) as f:
-            self.cmdqueue.extend(f.read().splitlines())
+            self.cmdqueue.extend(f.read().splitlines())        
+    def close(self):
+        'stop recording commands and close'
+        if self.file:
+            self.file.close()
+            self.file = None
+            
+    # ----- command line functionality -----
     def precmd(self, line):
         'catch every command and record it to file except playback'
         line = line.lower()
@@ -45,11 +52,14 @@ class ChalkBotCMD(cmd.Cmd):
             print(line, file=self.file)
         return line
         
-    def close(self):
-        'stop recording commands and close'
-        if self.file:
-            self.file.close()
-            self.file = None
+    def onecmd(self, line):
+        'catch exceptions and do not stop command line'
+        try:
+            return super().onecmd(line)
+        except Exception as ex:
+            print("[Exception] {}".format(ex))
+            # display error message
+            return False # don't stop
             
     # ----- drive commands -----
     def do_drive(self, v_pwm, r_pwm, p_pwm, duration):
@@ -62,7 +72,7 @@ class ChalkBotCMD(cmd.Cmd):
            p_pwm    - PWM for Printing [0, 255]
            duration - duration of the command in ms
         """
-        self.robot.server.drive(v_pwm, r_pwm, p_pwm, duration)
+        self.robot.drive(v_pwm, r_pwm, p_pwm, duration)
     
 def parse(arg):
     'Convert a series of zero or more numbers to an argument tuple'
