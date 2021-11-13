@@ -61,7 +61,7 @@ class ChalkBot(ChalkBotHTTPClient):
             self.drive_imu_blocking_time(self.velocity, angle, 0            , duration)
     
     # drive in the current direction of the global angle
-    def drive(self, distance, doPrint = False):
+    def drive_forward(self, distance, doPrint = False):
         print("drive: {}".format(distance))
         self.driveTo(self.targetAngle, distance, doPrint)
 

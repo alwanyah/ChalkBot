@@ -62,7 +62,7 @@ class ChalkBotCMD(cmd.Cmd):
             return False # don't stop
             
     # ----- drive commands -----
-    def do_drive(self, v_pwm, r_pwm, p_pwm, duration):
+    def do_drive(self, args):
         """
         Simple drive without sensor feedback (open loop). 
         
@@ -72,7 +72,7 @@ class ChalkBotCMD(cmd.Cmd):
            p_pwm    - PWM for Printing [0, 255]
            duration - duration of the command in ms
         """
-        self.robot.drive(v_pwm, r_pwm, p_pwm, duration)
+        self.robot.drive(*parse(args))
     
 def parse(arg):
     'Convert a series of zero or more numbers to an argument tuple'
