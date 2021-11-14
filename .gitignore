@@ -1,0 +1,15 @@
+#general
+
+#python
+*.pyc
+.idea/
+naoth.egg-info*
+
+#pyenv
+.python-version
+
+#vim swap files
+.*.swp
+
+# macOS
+.DS_Store
