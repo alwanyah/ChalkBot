@@ -73,6 +73,22 @@ class ChalkBotCMD(cmd.Cmd):
            duration - duration of the command in ms
         """
         self.robot.drive(*parse(args))
+        
+    def do_goto(self, args):
+        """
+        Turn to and drive to a relative position: 
+            goto <x> <y> <p_pwm>
+            
+        Parameters:
+            x     - relative x coorinate in mm (positive = forward)
+            y     - relative y coordinate in mm (positive = left)
+            p_pwm - PWM for Printing [0, 255]
+            
+        Example: drive 1m forward and activate the printer
+        
+            goto 1000 0 255
+        """
+        self.robot.goto_blocking(*parse(args))
     
 def parse(arg):
     'Convert a series of zero or more numbers to an argument tuple'
