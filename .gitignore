@@ -1,4 +1,5 @@
 #general
+test/
 
 #python
 *.pyc
