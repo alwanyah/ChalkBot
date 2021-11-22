@@ -6,7 +6,7 @@
 
 * https://learn.sparkfun.com/tutorials/gps-rtk-hookup-guide
 
-* Arduino library (with examples): **SparkFun u-blox GNSS**
+* Arduino library (with examples): **SparkFun u-blox GNSS**  
   https://github.com/sparkfun/SparkFun_u-blox_GNSS_Arduino_Library
 
 * get started with the u-Center  
