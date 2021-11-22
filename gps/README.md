@@ -1,14 +1,16 @@
 # GPS for ChalkBot
 
 ## SparkFun, GPS-RTK Board, NEO-M8P-2
-* A very extensove documentation for the https://www.berrybase.de/sensoren-module/funk-kommunikation/sparkfun-qwiic-gps-rtk-board-neo-m8p-2
+* A very extensove documentation for the  
+  https://www.berrybase.de/sensoren-module/funk-kommunikation/sparkfun-qwiic-gps-rtk-board-neo-m8p-2
 
 * https://learn.sparkfun.com/tutorials/gps-rtk-hookup-guide
 
 * Arduino library (with examples): **SparkFun u-blox GNSS**
   https://github.com/sparkfun/SparkFun_u-blox_GNSS_Arduino_Library
 
-  
+* get started with the u-Center  
+  https://learn.sparkfun.com/tutorials/getting-started-with-u-center-for-u-blox/all
 
 ## GPS-RTK (Real Time Kinematics)
 * BRIEF: the precision of localization can be < 2cm with additional correction data
