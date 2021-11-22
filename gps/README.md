@@ -63,6 +63,7 @@
     www.sapos-be-ntrip.de:2101
     ```
 * Kontakt
+>>>
     Jürgen Siebert
     Senatsverwaltung für Stadtentwicklung u. Wohnen
     Abteilung III (Geoinformation)
@@ -71,5 +72,6 @@
     10707 Berlin
     Tel.: +4930/90139-5373
     Fax.: +4930/90139-5361
+>>>
     
 * **NOTE:** *Gemäß den Open Data Prinzipien des Landes Berlin erhalten Sie die Daten geldleistungsfrei.*
