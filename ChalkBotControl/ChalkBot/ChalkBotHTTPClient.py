@@ -16,7 +16,13 @@ class ChalkBotHTTPClient:
             print("  DATA: {}".format(data))
             
         try:
+            start = time.time()
             r = requests.post(url, data = data, timeout=1.5)
+            end = time.time()
+            
+            if self.verbose:
+                print("  PING: {}".format(end - start))
+                
         except requests.Timeout:
             raise Exception("ChalkBot request timed out {}".format(url))
         
