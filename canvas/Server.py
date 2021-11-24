@@ -112,8 +112,8 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 if __name__ == "__main__":
 
   ThreadedTCPServer.allow_reuse_address = True
-  #server = ThreadedTCPServer(("", PORT), ChalkbotHandler)
-  server = ThreadedTCPServer(("", PORT), MyHandler)
+  server = ThreadedTCPServer(("", PORT), ChalkbotHandler)
+  #server = ThreadedTCPServer(("", PORT), MyHandler)
   
   print("Serving at port: {}".format(PORT))
   server.serve_forever()
