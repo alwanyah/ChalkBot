@@ -223,7 +223,8 @@ void loop()
   else if(chalkWebServer.lastCommand == ChalkWebServerAsync::GOTO)
   {
     float maxRotationPWM = 64.0f;
-    
+
+    // transform the target from global coordinates into local coordinates of the robot
     Vector2d targetPointLocal = robotPose / chalkWebServer.gotoPointRequest.target;
 
     // constraint max velocity
