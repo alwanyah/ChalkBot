@@ -1,8 +1,8 @@
 #include <Wire.h>
+#include <WiFi.h>
 #include "Gnss.h"
-
-Gnss gnss;
-GnssBlackboard gnssBlackboard;
+#include "GnssBlackboard.h"
+#include "WifiSecrets.h"
 
 void setup() {
   Serial.begin(115200); // esp32 uses 115200Bd for system messages
@@ -11,24 +11,28 @@ void setup() {
   Wire.begin(); // setup I2C master
   //Wire.setClock(400000); // set Clock to 400kHz
 
-  if (!gnss.begin()) {
+  WiFi.begin(WIFI_SSID, WIFI_PASSPHRASE);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println();
+
+  if (!Gnss.begin()) {
     for (;;);
   }
 }
 
 void loop() {
-  static auto last_packet = millis();
-  if (gnss.update(gnssBlackboard)) {
-
-    Serial.print("time = ");
-    Serial.print(millis() - last_packet);
-    Serial.print(", siv = ");
-    Serial.print(gnssBlackboard.getSatellitesInView());
-    Serial.print(", lon = ");
-    Serial.print(gnssBlackboard.getLongitude(), 7);
-    Serial.print(", lat = ");
-    Serial.println(gnssBlackboard.getLatitude(), 7);
-
-    last_packet = millis();
+  static unsigned long last_packet = millis();
+  static bool converter_init = false;
+  if (Gnss.update()) {
+    unsigned long t = millis();
+    unsigned long ms = t - last_packet;
+    Serial.print("ms = ");
+    Serial.printf("%4lu", ms);
+    Serial.print(", ");
+    GnssBlackboard.printAll();
+    last_packet = t;
   }
 }
