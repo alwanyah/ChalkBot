@@ -34,7 +34,7 @@ class Robot(object):
     def drive(self, driveRequest):
         self.xvel = math.cos(self.theta) * driveRequest[0]
         self.yvel = math.sin(self.theta) * driveRequest[0]
-        self.rvel = driveRequest[1]
+        self.rvel = driveRequest[1] / 1024
     
     def setVelocitySmooth(self, v, r):
         self.xvel = 0

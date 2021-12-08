@@ -11,7 +11,7 @@ robot = Robot.Robot()
 
 class ChalkBot(object):
     def __init__(self):
-        self.shape = pantograph.Rect(120, 150, 20, 20, "#f00")
+        self.shape = pantograph.Image("tutrobot.png",100, 100, 150, 120)
         self.theta = 0
         self.xvel = 0
         self.yvel = 0
