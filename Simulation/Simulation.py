@@ -7,7 +7,7 @@ from datetime import datetime
 import CommandServer
 import Robot
 
-
+robot = Robot.Robot()
 
 class ChalkBot(object):
     def __init__(self):
@@ -16,15 +16,14 @@ class ChalkBot(object):
         self.xvel = 0
         self.yvel = 0
         self.rvel = 0
-        self.robot = Robot.Robot()
 
     def update(self, canvas):
 
-        self.Robot.update(datetime.now().timestamp())
-        self.xvel = self.Robot.xvel
-        self.yvel = self.Robot.yvel
-        self.rvel = self.Robot.rvel
-        self.theta = self.Robot.theta
+        robot.update()
+        self.xvel = robot.xvel
+        self.yvel = robot.yvel
+        self.rvel = robot.rvel
+        self.theta = robot.theta
 
         rect = self.shape.get_bounding_rect()
 
@@ -37,9 +36,8 @@ class ChalkBot(object):
         if self.theta > math.pi:
             self.theta -= 2 * math.pi
 
-        self.Robot.theta = self.theta
-        self.Robot.x = self.x
-        self.Robot.y = self.y
+        robot.theta = self.theta
+        
 
         
 
@@ -53,6 +51,7 @@ class ChalkBotSimulation(pantograph.PantographHandler):
         self.xvel = 0
         self.yvel = 0
         self.chalkbot = ChalkBot()
+
 
     def update(self):
         self.clear_rect(0, 0, self.width, self.height)

@@ -6,6 +6,7 @@ import math
 import itertools
 from datetime import datetime
 import CommandServer
+import time
 #
 #import threading
 #import traceback
@@ -26,13 +27,13 @@ class Robot(object):
         self.lastUpdate = 0
         self.lastCommand = "None"
         self.lastCommandTime = 0
-        self.server = CommandServer()
+        CommandServer.init()
     
 
     #driveRequest has following structure: [v_pwm, r_pwm, p_pwm, duration]
     def drive(self, driveRequest):
-        self.xvel = (math.cos(self.theta) - math.sin(self.theta)) * driveRequest[0]
-        self.yvel = (math.sin(self.theta) + math.cos(self.theta)) * driveRequest[0]
+        self.xvel = math.cos(self.theta) * driveRequest[0]
+        self.yvel = math.sin(self.theta) * driveRequest[0]
         self.rvel = driveRequest[1]
     
     def setVelocitySmooth(self, v, r):
@@ -40,27 +41,28 @@ class Robot(object):
         self.yvel = 0
         self.rvel = 0
 
-    def update(self, t):
-        
-        if (self.server.lastCommand.equals("drive") and ((t - self.server.timeOfLastCommand) > self.server.driveRequest[3])):
-            self.drive(self.server.driveRequest)
+    def update(self):
 
+        t = datetime.timestamp(datetime.now()) * 1000
+        time_since_last_command = t - CommandServer.timeOfLastCommand
+
+        if (CommandServer.lastCommand=="drive" and (time_since_last_command < CommandServer.driveRequest[3])):
+            self.drive(CommandServer.driveRequest)
         else:
-            self.setVelocitySmooth(0, 0)
-    
-            
-    
+            self.setVelocitySmooth(0,0)
 
-
-
-
-
-
-
-#if __name__ == '__main__':
-#    robot = Robot()
-
-
+"""
+if __name__ == '__main__':
+    robot = Robot()
+    print(CommandServer.timeOfLastCommand)
+    print(CommandServer.lastCommand)
+    time.sleep(10)
+    print(CommandServer.timeOfLastCommand)
+    print(CommandServer.lastCommand)
+    time.sleep(10)
+    print(CommandServer.timeOfLastCommand)
+    print(CommandServer.lastCommand)
+"""
 
 
     
