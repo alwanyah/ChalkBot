@@ -21,6 +21,7 @@ PORT = 8000
 lastCommand = None
 timeOfLastCommand = datetime.timestamp(datetime.now())
 driveRequest = [0,0,0,0]
+status_motion = "stopped"
 
 def init():
     
@@ -60,9 +61,9 @@ class SimulationHandler(SimpleHTTPRequestHandler):
         length = int(self.headers.get('content-length'))
         data = self.rfile.read(length)
         if self.path == "/status_motion":
-            response = "stopped"
+            response = status_motion
         elif self.path == "/status_imu":
-            response = "no imu here"
+            response = "N/A"
         elif self.path == "/orientation":
             response = "1.73"
         elif self.path == "/pose":

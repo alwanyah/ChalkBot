@@ -48,8 +48,10 @@ class Robot(object):
 
         if (CommandServer.lastCommand=="drive" and (time_since_last_command < CommandServer.driveRequest[3])):
             self.drive(CommandServer.driveRequest)
+            CommandServer.status_motion = "moving"
         else:
             self.setVelocitySmooth(0,0)
+            CommandServer.status_motion = "stopped"
 
 """
 if __name__ == '__main__':
