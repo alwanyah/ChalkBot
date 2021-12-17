@@ -89,6 +89,25 @@ class ChalkBotCMD(cmd.Cmd):
             goto 1000 0 255
         """
         self.robot.goto_blocking(*parse(args))
+        
+    def do_motor(self, args):
+        """
+        Set a PWM to the motors:
+            motor <FL> <FR> <RL> <RR> <P>
+        
+        where
+            FL = Front Left motor
+            FR = Front Rear motor
+            RL = Rear Left motor
+            RR = Rear Right motor
+            P  = Print motor
+        Each PWM can be set to a value in [-255,255].
+        
+        Example: test only the front left motor with full speed
+        
+            motor 255 0 0 0 0
+        """
+        self.robot.motor(*parse(args))
     
 def parse(arg):
     'Convert a series of zero or more numbers to an argument tuple'
