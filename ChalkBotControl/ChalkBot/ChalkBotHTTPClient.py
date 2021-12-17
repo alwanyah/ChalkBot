@@ -95,7 +95,7 @@ class ChalkBotHTTPClient:
         self.goto(x, y, p_pwm)
         
         while self.status() != "stopped":
-            print("drive_imu ...")
+            print("goto_blocking ...")
             time.sleep(1)
 
 if __name__ == "__main__":
