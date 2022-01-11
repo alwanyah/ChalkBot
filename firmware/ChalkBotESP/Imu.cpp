@@ -14,7 +14,7 @@ bool ImuClass::begin() {
         logger.log_info("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
         return false;
     } else {
-        Serial.println("BNO055 connected!");
+        logger.log_info("BNO055 connected!");
         delay(1000); // FIXME: ist das nötig?
         bno.setExtCrystalUse(true);
         return true;

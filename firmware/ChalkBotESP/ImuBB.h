@@ -1,8 +1,6 @@
 #ifndef IMU_BB_H
 #define IMU_BB_H
 
-// stub
-
 class ImuBB {
     friend class ImuClass;
 
