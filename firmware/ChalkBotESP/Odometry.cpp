@@ -10,25 +10,25 @@ static Logger logger("odometry");
 // Experimental - not used yet
 // distance - target distance to drive
 // pwm - target pwm to be used
-static float distanceToTime(float distance, float pwm) 
+static float distanceToTime(float distance, float pwm)
 {
   float targetVelocity = config::odometry::maxVelocity * (pwm / 255.0f);
   float timeNeeded = distance / targetVelocity; // in s
 
   timeNeeded *= config::odometry::correctionFactor;
-  
-  return timeNeeded; 
+
+  return timeNeeded;
 }
 
 // estimate the distance that the robot moved in a given time
-static float timeToDistance(float timeDelta, float pwm) 
+static float timeToDistance(float timeDelta, float pwm)
 {
   float targetVelocity = config::odometry::maxVelocity * (pwm / 255.0f);
   float distance = timeDelta * targetVelocity;
 
   distance /= config::odometry::correctionFactor;
 
-  return distance; 
+  return distance;
 }
 
 void OdometryClass::update() {

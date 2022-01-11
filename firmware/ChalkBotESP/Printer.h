@@ -6,8 +6,8 @@
 class PrinterClass
 {
   public:
-    PrinterClass(uint8_t pinPwm, uint8_t pinDir1, uint8_t pinDir2) 
-      : 
+    PrinterClass(uint8_t pinPwm, uint8_t pinDir1, uint8_t pinDir2)
+      :
       //pinPwm(pinPwm),
       pinDir1(pinDir1),
       pinDir2(pinDir2)
@@ -15,7 +15,7 @@ class PrinterClass
         pinMode(pinPwm, OUTPUT);
         pinMode(pinDir1, OUTPUT);
         pinMode(pinDir2, OUTPUT);
-        
+
         digitalWrite(pinPwm, LOW);
         digitalWrite(pinDir1, LOW);
         digitalWrite(pinDir2, LOW);
@@ -27,13 +27,13 @@ class PrinterClass
 
         // configure LED PWM functionalitites
         ledcSetup(pwmChannel, freq, resolution);
-        
+
         // attach the channel to the GPIO to be controlled
         ledcAttachPin(pinPwm, pwmChannel);
         pinPwm = pwmChannel;
     }
-    
-    void setSpeed(int16_t speed) 
+
+    void setSpeed(int16_t speed)
     {
       // Make sure the speed is within the limit.
       if (speed > 255) {
@@ -56,7 +56,7 @@ class PrinterClass
         ledcWrite(pinPwm, -speed);
       }
     }
-    
+
   private:
     uint8_t pinPwm;
 

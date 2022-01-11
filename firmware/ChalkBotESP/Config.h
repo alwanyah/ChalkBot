@@ -14,7 +14,7 @@ namespace config {
         /* aus ChalkBotESP.ino:
             // mapping stm32 feather -> esp32 feather
             // PWM 5-> 4; 6-> 18; 9-> 19; 10-> 16
-            // DIR A0->A12 ;A1->A11 ;A2->A10 ;A3->A9  
+            // DIR A0->A12 ;A1->A11 ;A2->A10 ;A3->A9
             //PRINT: 23-> 5 (SCK); A4 -> A8; A5->A7
 
             // Configure the motor driver.
@@ -23,11 +23,11 @@ namespace config {
             { 16, 17 }, // -motorFrontRight: PWM =  18, DIR = A11
             { A12,A11}, // motorRearLeft  : PWM =  19, DIR = A10
             { A0, A1 }  // motorRearRight : PWM =  16, DIR = A9
-            ); 
+            );
         */
         constexpr uint8_t motorFrontLeftPwm = 0; // 4;
         constexpr uint8_t motorFrontLeftDir = 0; // A12;
-        
+
         constexpr uint8_t motorFrontRightPwm = 0; // 18;
         constexpr uint8_t motorFrontRightDir = 0; // A11;
 
@@ -45,7 +45,7 @@ namespace config {
         constexpr uint8_t printPin1 = A5; // FIXME: pin1 = forward, pin2 = backward?
         constexpr uint8_t printPin2 = A6;
     }
-    
+
     namespace wifi {
         /* aus ChalkBotESP.ino:
             chalkWebServer.initAP("chalkbot", "a1b0a1b0a1");
@@ -60,7 +60,7 @@ namespace config {
         // FIXME: why float and not double?
 
         // fixed parameters
-        static constexpr float wheelDiameter = 135.0f; // mm  
+        static constexpr float wheelDiameter = 135.0f; // mm
         static constexpr float maxRPM = 313.0f; // max RPM of the motors with PWM 255
         static constexpr float wheelCircumference = wheelDiameter * PI;
         static constexpr float maxVelocity = wheelCircumference * maxRPM / 60.0f; // mm/s

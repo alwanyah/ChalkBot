@@ -7,7 +7,7 @@
 
 class ImuClass {
     Adafruit_BNO055 bno;
-    
+
 public:
     ImuClass() : bno(55) {}
 

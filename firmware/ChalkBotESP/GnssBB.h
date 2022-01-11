@@ -5,7 +5,7 @@
 
 class GnssBB {
   friend class GnssClass;
-  
+
   bool globalPositionValid = false;
   double latitude = 0.0; // deg
   double longitude = 0.0; // deg

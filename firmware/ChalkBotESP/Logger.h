@@ -25,7 +25,7 @@ public:
 
     public:
         Writer(const Logger &logger, Verbosity level) : logger(logger), level(level) {}
-        
+
         void finish() {
             logger.log(level, message);
             message.clear();

@@ -7,7 +7,7 @@
 #include "Behavior.h"
 
 // The setup routine runs once when you press reset.
-void setup() 
+void setup()
 {
   Serial.begin(115200);
   while (!Serial) {};
@@ -26,7 +26,7 @@ void setup()
   delay(1000); // FIXME
 }
 
-void loop() 
+void loop()
 {
   Imu.update();
   // Gnss.update();

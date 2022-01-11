@@ -3,7 +3,7 @@
 
 class BehaviorBB {
     friend class BehaviorClass;
-    
+
     bool moving = false;
 
 public:

@@ -11,7 +11,7 @@ static Logger logger("net");
 
 // extracted from ChalkWebServerAsync.h
 // FIXME: should be replaced
-bool NetClass::initAP(const char *ssid, const char *password) 
+bool NetClass::initAP(const char *ssid, const char *password)
 {
     logger.log_info("Initialising WiFi as access point...");
 
@@ -24,7 +24,7 @@ bool NetClass::initAP(const char *ssid, const char *password)
     WiFi.mode(WIFI_AP);
     WiFi.softAP(ssid, password);
     delay(1000);
-        
+
     // Configures static IP address
     if (!WiFi.softAPConfig(local_IP, gateway, subnet)) {
         logger.log_error("AP Failed to configure");
@@ -44,7 +44,7 @@ bool NetClass::initAP(const char *ssid, const char *password)
 
 // extracted from ChalkWebServerAsync.h
 // FIXME: should be replaced
-bool NetClass::init(const char *ssid, const char *password) 
+bool NetClass::init(const char *ssid, const char *password)
 {
     logger.log_info("Initialising WiFi as station...");
 

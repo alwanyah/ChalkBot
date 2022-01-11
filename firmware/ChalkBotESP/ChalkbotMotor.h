@@ -11,14 +11,14 @@ class ChalkbotMotorClass
       uint8_t pwmPin;
       uint8_t dirPin;
     };
-  
+
     ChalkbotMotorClass (
       const MotorPins& pins0,
       const MotorPins& pins1,
       const MotorPins& pins2,
       const MotorPins& pins3
     )
-      : 
+      :
       motorFrontLeft( pins0.pwmPin, pins0.dirPin),
       motorFrontRight(pins1.pwmPin, pins1.dirPin),
       motorRearLeft(  pins2.pwmPin, pins2.dirPin),
@@ -34,7 +34,7 @@ class ChalkbotMotorClass
   }
 
   // methods for control
-  // x - speed in the x direction 
+  // x - speed in the x direction
   // rotation - rotation speed
   void setVelocityDirect(int16_t x, int16_t rotation)
   {
@@ -54,10 +54,10 @@ class ChalkbotMotorClass
   {
     unsigned long currentTime = millis();
     float timeDelta = float(currentTime - lastUpdateTime) / 1000.0f; // in s
-    
+
     float changeX = x - currentX;
     float changeRotation = rotation - currentRotation;
- 
+
     float maxChange = max(abs(changeX), abs(changeRotation));
     float requestedAcceleration = maxChange/timeDelta;
 
@@ -69,7 +69,7 @@ class ChalkbotMotorClass
 
     currentX += changeX;
     currentRotation += changeRotation;
-    
+
     setVelocityDirect((int16_t)(currentX+0.5f), (int16_t)(currentRotation+0.5f));
 
     lastUpdateTime = currentTime;
@@ -78,12 +78,12 @@ class ChalkbotMotorClass
   private:
     // state for the setVelocitySmooth
     float currentX = 0.0f;
-    float currentRotation = 0.0f; // 
+    float currentRotation = 0.0f; //
 
     // go to max in 1s
     float maxAcceleration = 512.0f; //255.0f / 1.0f; // x/s^2, x in [0,255]
     unsigned long lastUpdateTime = 0; // last call of setVelocitySmooth in ms
-    
+
   // public:
     CytronMD20A motorFrontLeft;
     CytronMD20A motorFrontRight;

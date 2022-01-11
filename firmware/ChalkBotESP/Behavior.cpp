@@ -32,10 +32,10 @@ static void driveWithTimeIMU(float x, float angle, int printSpeed)
 
     // continuous correction
     ChalkbotMotor.setVelocitySmooth(x, va);
-    
+
     // prioritize turn correction
     /*
-    if(abs(va) < maxRotationPWM) { 
+    if(abs(va) < maxRotationPWM) {
         ChalkbotMotor.setVelocitySmooth(x, va);
     } else {
         ChalkbotMotor.setVelocitySmooth(0, va);
@@ -110,7 +110,7 @@ void BehaviorClass::update() {
             //     Serial.print(chalkWebServer.driveIMURequest.duration);
             //     Serial.println("");
             // }
-        
+
             bb::behavior.moving = true;
         }
 
@@ -131,7 +131,7 @@ void BehaviorClass::update() {
             float maxDistanceError = 30;
 
             Serial.println(vx);
-            if(abs(vx) > maxDistanceError) 
+            if(abs(vx) > maxDistanceError)
             {
                 // P-controller
                 float va = (float)(targetPointLocal.angle() * 1024.0f);
@@ -168,7 +168,7 @@ void BehaviorClass::update() {
         default:
             stop = true;
     }
-    
+
     if (stop)
     {
         ChalkbotMotor.setVelocitySmooth(0, 0);

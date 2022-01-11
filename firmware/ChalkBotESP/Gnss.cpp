@@ -37,7 +37,7 @@ bool GnssClass::begin() {
       base.factoryReset();
       delay(1000);
     }
-    
+
     if (attempt == 1) {
       logger.log_info("Initializing GNSS...");
     } else {
@@ -91,7 +91,7 @@ bool GnssClass::begin() {
       logger.log_warn("Failed to enable non-blocking mode for RELPOSNED.");
       continue;
     }
-    
+
     // save config to flash and BBR (battery backed RAM)
     if (!base.saveConfiguration()) {
       logger.log_warn("Failed to enable save configuration.");
@@ -127,13 +127,13 @@ bool GnssClass::update() {
     bb::gnss.ntripNmeaBytesSent = 0;
     bb::gnss.ntripRtcmByesReceived = 0;
   }
-  
+
   if (base.packetUBXNAVHPPOSLLH != NULL && base.packetUBXNAVHPPOSLLH->moduleQueried.moduleQueried.all != 0) {
     updateHPPOSLLH(&base.packetUBXNAVHPPOSLLH->data);
     base.flushHPPOSLLH();
     hasUpdate = true;
   }
-  
+
   if (base.packetUBXNAVRELPOSNED != NULL && base.packetUBXNAVRELPOSNED->moduleQueried.moduleQueried.all != 0) {
     updateRELPOSNED(&base.packetUBXNAVRELPOSNED->data);
     base.flushNAVRELPOSNED();
@@ -202,7 +202,7 @@ bool GnssClass::ntripConnect() {
     "Connection: close\r\n" // <- not actually, this is Ntrip, not HTTP
     "Authorization: Basic " + NTRIP_AUTHORIZATION + "\r\n"
     "\r\n";
-  
+
   ntrip_client.print(request);
   String response = ntrip_client.readStringUntil('\n');
   if (response != "ICY 200 OK\r" || !ntrip_client.find("\r\n")) {
@@ -210,7 +210,7 @@ bool GnssClass::ntripConnect() {
     writer.print("Ntrip response: ");
     writer.print(response);
     writer.finish();
-    
+
     ntrip_client.stop();
     last_failed_attempt = millis();
     return false;
