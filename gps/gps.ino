@@ -2,11 +2,17 @@
 #include <WiFi.h>
 #include "Gnss.h"
 #include "GnssBlackboard.h"
+#include "Logger.h"
 #include "WifiSecrets.h"
+
+Logger logger("main");
+WiFiServer logServer(8001);
 
 void setup() {
   Serial.begin(115200); // esp32 uses 115200Bd for system messages
   while (!Serial);
+
+  Logger::attach_listener(Serial, Logger::INFO, {{ "GNSS", Logger::DEBUG }});
 
   Wire.begin(); // setup I2C master
   //Wire.setClock(400000); // set Clock to 400kHz
@@ -18,21 +24,22 @@ void setup() {
   }
   Serial.println();
 
+  auto writer = logger.writer_info();
+  writer.print("local ip = ");
+  writer.print(WiFi.localIP());
+  writer.finish();
+
+  logServer.begin();
+
   if (!Gnss.begin()) {
     for (;;);
   }
 }
 
 void loop() {
-  static unsigned long last_packet = millis();
-  static bool converter_init = false;
-  if (Gnss.update()) {
-    unsigned long t = millis();
-    unsigned long ms = t - last_packet;
-    Serial.print("ms = ");
-    Serial.printf("%4lu", ms);
-    Serial.print(", ");
-    GnssBlackboard.printAll();
-    last_packet = t;
+  WiFiClient logClient = logServer.available();
+  if (logClient) {
+    Logger::attach_listener_managed(new auto(logClient), Logger::DEBUG);
   }
+  Gnss.update();
 }

@@ -1,5 +1,6 @@
 #include "Gnss.h"
 #include "GnssBlackboard.h"
+#include "Logger.h"
 
 #include <WiFi.h>
 
@@ -19,6 +20,8 @@ static constexpr const char *NTRIP_AUTHORIZATION = "c2Fwb3NibG40MjYtMTpnYm0xMC00
 GnssBlackboardClass GnssBlackboard;
 GnssClass Gnss;
 
+static Logger logger("GNSS");
+
 static WiFiClient ntrip_client;
 static bool ntrip_connected = false;
 static char nmea_buffer[NMEA_BUFFER_SIZE];
@@ -26,84 +29,89 @@ static size_t nmea_buffer_head = 0;
 static size_t nmea_buffer_tail = 0;
 static bool nmea_need_sync = true;
 
+static void logData();
+
 bool GnssClass::begin() {
   for (int attempt = 1; attempt < INIT_ATTEMPTS; ++attempt) {
     if (attempt == 2) {
-      Serial.println("Resetting GNSS sensor...");
+      logger.log_warn("Resetting GNSS sensor.");
       base.factoryReset();
       delay(1000);
     }
     
-    Serial.print("Initializing GNSS...");
     if (attempt == 1) {
-      Serial.println();
+      logger.log_info("Initializing GNSS...");
     } else {
-      Serial.print(" (attempt ");
-      Serial.print(attempt);
-      Serial.print("/");
-      Serial.print(INIT_ATTEMPTS);
-      Serial.println(")");
+      auto writer = logger.writer_info();
+      writer.print("Initializing GNSS... (attempt ");
+      writer.print(attempt);
+      writer.print("/");
+      writer.print(INIT_ATTEMPTS);
+      writer.print(")");
+      writer.finish();
     }
 
     if (!base.begin()) {
-      Serial.println("GNSS sensor not found.");
+      logger.log_warn("GNSS sensor not found.");
       continue;
     }
 
     // output UBX (u-blox propritary) packets and NMEA for sending to Ntrip
     if (!base.setI2COutput(COM_TYPE_UBX | COM_TYPE_NMEA)) {
-      Serial.println("Failed to set output format.");
+      logger.log_warn("Failed to set output format.");
       continue;
     }
 
     // input UBX (control) and RTCM (correction data)
     if (!base.setPortInput(COM_PORT_I2C, COM_TYPE_UBX | COM_TYPE_RTCM3)) {
-      Serial.println("Failed to set output format.");
+      logger.log_warn("Failed to set output format.");
       continue;
     }
 
     // set update frequency
     if (!base.setNavigationFrequency(10)) {
-      Serial.println("Failed to set navigation frequency.");
+      logger.log_warn("Failed to set navigation frequency.");
       continue;
     }
 
     // enable non-blocking mode
     // PVT = position/velocity/time
     // if (!base.setAutoPVT(true)) {
-    //   Serial.println("Failed to enable non-blocking mode for PVT.");
+    //   logger.log_warn("Failed to enable non-blocking mode for PVT.");
     //   continue;
     // }
 
     // HPPOSLLH = high precision position latitude/longitude/height
     if (!base.setAutoHPPOSLLH(true)) {
-      Serial.println("Failed to enable non-blocking mode for HPPOSLLH.");
+      logger.log_warn("Failed to enable non-blocking mode for HPPOSLLH.");
       continue;
     }
 
     // RELPOSNED = relative position north/east/down
     if (!base.setAutoRELPOSNED(true)) {
-      Serial.println("Failed to enable non-blocking mode for RELPOSNED.");
+      logger.log_warn("Failed to enable non-blocking mode for RELPOSNED.");
       continue;
     }
     
     // save config to flash and BBR (battery backed RAM)
     if (!base.saveConfiguration()) {
-      Serial.println("Failed to enable save configuration.");
+      logger.log_warn("Failed to enable save configuration.");
       continue;
     }
 
     // base.setProcessNMEAMask(SFE_UBLOX_FILTER_NMEA_GGA);
 
-    Serial.println("GNSS initialized.");
+    logger.log_info("GNSS initialized.");
     return true;
   }
 
-  Serial.println("failed to initialize GNSS.");
+  logger.log_warn("failed to initialize GNSS.");
   return false;
 }
 
 bool GnssClass::update() {
+  unsigned long updateBegin = millis();
+
   if (!base.checkUblox()) {
     return false;
   }
@@ -133,6 +141,11 @@ bool GnssClass::update() {
     hasUpdate = true;
   }
 
+  if (hasUpdate) {
+    GnssBlackboard.updateDuration = millis() - updateBegin;
+    logData();
+  }
+
   return hasUpdate;
 }
 
@@ -141,7 +154,7 @@ void GnssClass::updateHPPOSLLH(UBX_NAV_HPPOSLLH_data_t *data) {
     GnssBlackboard.globalPositionValid = false;
     return;
   }
-  GnssBlackboard.globalPositionValid = true;
+  GnssBlackboard.globalPositionValid = data->hAcc != UINT32_MAX;
   GnssBlackboard.latitude = data->lat / 1e7 + data->latHp / 1e9;
   GnssBlackboard.longitude = data->lon / 1e7 + data->lonHp / 1e9;
   GnssBlackboard.heightAboveCenter = data->height / 1e3 + data->heightHp / 1e4;
@@ -180,7 +193,7 @@ bool GnssClass::ntripConnect() {
     return false;
   }
   if (!ntrip_client.connect(NTRIP_HOST, NTRIP_PORT)) {
-    Serial.println("Failed to connect to Ntrip.");
+    logger.log_info("Failed to connect to Ntrip.");
     last_failed_attempt = millis();
     return false;
   }
@@ -194,8 +207,11 @@ bool GnssClass::ntripConnect() {
   ntrip_client.print(request);
   String response = ntrip_client.readStringUntil('\n');
   if (response != "ICY 200 OK\r" || !ntrip_client.find("\r\n")) {
-    Serial.print("Ntrip response: ");
-    Serial.println(response);
+    auto writer = logger.writer_info();
+    writer.print("Ntrip response: ");
+    writer.print(response);
+    writer.finish();
+    
     ntrip_client.stop();
     last_failed_attempt = millis();
     return false;
@@ -204,14 +220,14 @@ bool GnssClass::ntripConnect() {
   nmea_buffer_tail = 0;
   nmea_need_sync = true;
   ntrip_connected = true;
-  Serial.println("Ntrip connected.");
+  logger.log_info("Ntrip connected.");
   return true;
 }
 
 void GnssClass::ntripDisconnect() {
   ntrip_client.stop();
   ntrip_connected = false;
-  Serial.println("Ntrip disconnected");
+  logger.log_warn("Ntrip disconnected.");
 }
 
 size_t GnssClass::ntripSendNMEA() {
@@ -239,11 +255,11 @@ size_t GnssClass::ntripReceiveRTCM() {
       break;
     } else if (size > 0) {
       if (size == sizeof buffer) {
-        Serial.println("RTCM buffer full!");
+        logger.log_warn("RTCM buffer full.");
       }
       total_read += size;
       if (!Gnss.base.pushRawData(buffer, size)) {
-        Serial.println("Failed to send RTCM data.");
+        logger.log_error("Failed to send RTCM data.");
       }
     }
   } while (size == sizeof buffer);
@@ -260,7 +276,7 @@ void SFE_UBLOX_GNSS::processNMEA(char incoming) {
   nmea_need_sync = false;
   if (nmea_buffer_tail == sizeof nmea_buffer) {
     if (nmea_buffer_head == 0) {
-      Serial.println("NMEA buffer full!");
+      logger.log_warn("NMEA buffer full!");
       nmea_need_sync = true;
       return;
     }
@@ -273,4 +289,43 @@ void SFE_UBLOX_GNSS::processNMEA(char incoming) {
   }
   nmea_buffer[nmea_buffer_tail] = incoming;
   ++nmea_buffer_tail;
+}
+
+static void logData() {
+  auto writer = logger.writer_debug();
+  writer.print("ms = ");
+  writer.printf("%3zu", GnssBlackboard.getUpdateDuration());
+  writer.print(", ntrip send = ");
+  writer.printf("%4zu", GnssBlackboard.getNtripNmeaBytesSent());
+  writer.print(" recv = ");
+  writer.printf("%4zu", GnssBlackboard.getNtripRtcmByesReceived());
+  if (GnssBlackboard.hasGlobalPosition()) {
+    writer.print(", lat = ");
+    writer.print(GnssBlackboard.getLatitude(), 9);
+    writer.print(", lon = ");
+    writer.print(GnssBlackboard.getLongitude(), 9);
+    writer.print(", acc = ");
+    writer.print(GnssBlackboard.getHorizontalAccuracy(), 4);
+  }
+  if (GnssBlackboard.hasRelativePosition()) {
+    writer.print(", N = ");
+    writer.print(GnssBlackboard.getNorth(), 4);
+    writer.print("+-");
+    writer.print(GnssBlackboard.getNorthAccuracy(), 4);
+    writer.print(", E = ");
+    writer.print(GnssBlackboard.getEast(), 4);
+    writer.print("+-");
+    writer.print(GnssBlackboard.getEastAccuracy(), 4);
+  }
+  if (GnssBlackboard.hasHeading()) {
+    writer.print(", head = ");
+    writer.print(GnssBlackboard.getHeading(), 4);
+    writer.print("+-");
+    writer.print(GnssBlackboard.getHeadingAccuracy(), 4);
+  }
+  writer.print(", fix = ");
+  writer.print(GnssBlackboard.hasFix());
+  writer.print(", cor = ");
+  writer.print(GnssBlackboard.hasCorrection());
+  writer.finish();
 }

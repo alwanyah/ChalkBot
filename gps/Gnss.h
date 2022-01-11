@@ -1,3 +1,6 @@
+#ifndef GNSS_H
+#define GNSS_H
+
 #include <SparkFun_u-blox_GNSS_Arduino_Library.h>
 
 class GnssClass {
@@ -20,3 +23,5 @@ private:
 };
 
 extern GnssClass Gnss;
+
+#endif
