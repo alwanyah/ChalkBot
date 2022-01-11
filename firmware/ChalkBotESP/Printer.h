@@ -1,15 +1,12 @@
-// https://github.com/CytronTechnologies/CytronMotorDriver
-
-#ifndef PRINT_DRIVER_H
-#define PRIN_DRIVER_H
+#ifndef PRINTER_H
+#define PRINTER_H
 
 #include <Arduino.h>
-#include <stdint.h>
 
-class PrintMD
+class PrinterClass
 {
   public:
-    PrintMD(uint8_t pinPwm, uint8_t pinDir1, uint8_t pinDir2) 
+    PrinterClass(uint8_t pinPwm, uint8_t pinDir1, uint8_t pinDir2) 
       : 
       //pinPwm(pinPwm),
       pinDir1(pinDir1),
@@ -60,7 +57,7 @@ class PrintMD
       }
     }
     
-  protected:
+  private:
     uint8_t pinPwm;
 
     // NOTE: directional pins
@@ -68,5 +65,6 @@ class PrintMD
     uint8_t pinDir2;
 };
 
+extern PrinterClass Printer;
 
 #endif

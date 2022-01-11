@@ -1,11 +1,10 @@
-// https://github.com/CytronTechnologies/CytronMotorDriver
-
-#ifndef CHALKBOT_MOTOR_DRIVER_H
-#define CHALKBOT_MOTOR_DRIVER_H
+#ifndef CHALKBOT_MOTOR_H
+#define CHALKBOT_MOTOR_H
 
 #include "CytronMotorDriver.h"
+#include "BB.h"
 
-class ChalkbotMD
+class ChalkbotMotorClass
 {
   public:
     struct MotorPins {
@@ -13,7 +12,7 @@ class ChalkbotMD
       uint8_t dirPin;
     };
   
-    ChalkbotMD (
+    ChalkbotMotorClass (
       const MotorPins& pins0,
       const MotorPins& pins1,
       const MotorPins& pins2,
@@ -47,8 +46,8 @@ class ChalkbotMD
     motorRearRight.setSpeed ( x + rotation);
 
     // store the current command
-    last_x = x;
-    last_rotation = rotation;
+    bb::chalkbotMotor.last_x = x;
+    bb::chalkbotMotor.last_rotation = rotation;
   }
 
   void setVelocitySmooth(float x, float rotation)
@@ -76,9 +75,6 @@ class ChalkbotMD
     lastUpdateTime = currentTime;
   }
 
-  int16_t getLastX() { return last_x; }
-  int16_t getLastRotation() { return last_rotation; }
-
   private:
     // state for the setVelocitySmooth
     float currentX = 0.0f;
@@ -87,16 +83,14 @@ class ChalkbotMD
     // go to max in 1s
     float maxAcceleration = 512.0f; //255.0f / 1.0f; // x/s^2, x in [0,255]
     unsigned long lastUpdateTime = 0; // last call of setVelocitySmooth in ms
-
-    // store last motion commands
-    int16_t last_x; 
-    int16_t last_rotation;
     
-  public:
+  // public:
     CytronMD20A motorFrontLeft;
     CytronMD20A motorFrontRight;
     CytronMD20A motorRearLeft;
     CytronMD20A motorRearRight;
 };
+
+extern ChalkbotMotorClass ChalkbotMotor;
 
 #endif

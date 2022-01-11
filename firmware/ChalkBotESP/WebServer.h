@@ -1,155 +1,49 @@
 
-#ifndef ChalkWebServerAsync_H
-#define ChalkWebServerAsync_H
-
-#include <WiFi.h>
-
-//https://github.com/me-no-dev/AsyncTCP
-#include <AsyncTCP.h>
+#ifndef WEB_SERVER_H
+#define WEB_SERVER_H
 
 //https://github.com/me-no-dev/ESPAsyncWebServer
 #include <ESPAsyncWebServer.h>
 
-#include "math/Pose2D.h"
+#include "math/Vector2.h"
+#include "BB.h"
 
-class ChalkWebServerAsync
+class WebServerClass
 {
-public:
   AsyncWebServer server;
 
-  // commands that can be handeled by the server
-  enum Command {
-    NONE = 0,
-    DRIVE = 1,
-    MOTOR_TEST = 2,
-    DRIVE_IMU = 3,
-    GOTO = 4
-  } lastCommand = NONE;
-
-  unsigned long timeOfLastCommand = 0;
-
   // log messages (experimental)
+  // FIXME: integrate this with logger? Memory might get full if we store infinite logs.
   String message = "";
 
   // for parsing commands
   char receive_buffer[128];
 
-  // motor test
-  int16_t motor_speed[5];
-
-  struct {
-    int16_t x_pwm    = 0; // [-255,255] drive
-    int16_t a_pwm    = 0; // [-255,255] turn
-    int16_t p_pwm    = 0; // [0,255] print
-    int16_t duration = 0; // in ms
-  } driveRequest;
-
-  struct {
-    int16_t vx       = 0;
-    float va         = 0;
-    int16_t p        = 0;
-    int16_t duration = 0;
-  } driveIMURequest;
-
-  // target point for the robot to drive to
-  struct {
-    Vector2d target;
-    int16_t p_pwm = 0;
-  } gotoPointRequest;
-
-  // status of the robot
-  String status_motion = "unknown";
-  String status_imu = "unknown";
-
-  // reported orientation
-  double orientation = 0.0;
-
-  // reported odometry pose
-  Pose2D robotPose;
-
+  // FIXME: replace with logger
   int16_t debug = 0;
 
-  IPAddress ipAddress;
+public:
 
-  ChalkWebServerAsync() : server(80) {
-    //AsyncWebServer server(80);
-  } 
+  WebServerClass() : server(80) {}
 
+  void begin() {
+    registerRequests();
+    server.begin();
+  }
+
+  void update();
+
+private:
   char* make_string(uint8_t* inputData, size_t len) {
     assert(len < sizeof(receive_buffer));
     memcpy(receive_buffer, inputData, len);
     receive_buffer[len] = '\0';
     return receive_buffer;
   }
-  
-  void initAP(const std::string& ssid, const std::string& password) 
+
+  void registerRequests()
   {
-    // Set Static IP address
-    IPAddress local_IP(10, 0, 4, 99);
-    // Set your Gateway IP address
-    IPAddress gateway(10, 0, 4, 1);
-    IPAddress subnet(255, 255, 0, 0);
-
-    WiFi.mode(WIFI_AP);
-    WiFi.softAP(ssid.c_str(), password.c_str());
-    delay(1000);
-     
-    // Configures static IP address
-    if (!WiFi.softAPConfig(local_IP, gateway, subnet)) {
-      Serial.println("AP Failed to configure");
-    } else {
-      delay(1000);
-      Serial.println("AP configured to: ");
-      Serial.println(WiFi.softAPIP());
-    }
-
-    ipAddress = WiFi.softAPIP();
-
-    registerRequests();
-    
-    // Start server
-    server.begin();
-  }
-  
-  void init(const std::string& ssid, const std::string& password) 
-  {
-    
-    WiFi.mode(WIFI_AP_STA);
-    //WiFi.mode(WIFI_STA);
-    Serial.print("connecting to: ");
-    Serial.println(ssid.c_str());
-    WiFi.begin(ssid.c_str(), password.c_str());
-    while (WiFi.status() != WL_CONNECTED) {
-      delay(500);
-      Serial.print(".");
-    }
-
-    /*
-    // connect to existing wifi
-    // Set Static IP address
-    IPAddress local_IP(10, 0, 4, 99);
-    // Set your Gateway IP address
-    IPAddress gateway(10, 0, 4, 1);
-    IPAddress subnet(255, 255, 0, 0);
-    if (!WiFi.config(local_IP, gateway, subnet)) {
-      Serial.println("STA Failed to configure");
-    }
-    */
-
-    ipAddress = WiFi.localIP();
-
-    //WiFi.setHostname("chalkbot");
-
-    registerRequests();
-    
-    // Start server
-    server.begin();
-  }
-
-
-  void registerRequests() 
-  {
-    // registed get responses
+    // register get responses
     server.on("/log", HTTP_GET, [&](AsyncWebServerRequest *request){
       request->send(200, "text/plain", message);
     });
@@ -157,17 +51,19 @@ public:
     server.on("/", HTTP_GET, [&](AsyncWebServerRequest *request) {
       String str;
       str += "<p>ChalkBot Control. Use apropriate get requests.</p>";
-      str += "<p>IMU: " + String(status_imu) + "</p>";
+      str += "<p>IMU: " + getImuStatusString() + "</p>";
       request->send(200, "text/plain", str);
     });
 
     server.on("/status_motion", HTTP_POST, [&](AsyncWebServerRequest *request) {
-          Serial.println("/status_motion");
-          Serial.println(status_motion);
-          request->send(200, "text/plain", status_motion);
+      String status_motion = getStatusMotionString();
+      Serial.println("/status_motion");
+      Serial.println(status_motion);
+      request->send(200, "text/plain", status_motion);
     });
 
     server.on("/status_imu", HTTP_POST, [&](AsyncWebServerRequest *request) {
+      String status_imu = getImuStatusString();
       Serial.println("/status_imu");
       Serial.println(status_imu);
       request->send(200, "text/plain", status_imu);
@@ -175,119 +71,136 @@ public:
 
     server.on("/orientation", HTTP_POST, [&](AsyncWebServerRequest *request) {
       Serial.println("/orientation");
-      Serial.println(orientation);
-      request->send(200, "text/plain", String(orientation));
+      Serial.println(bb::imu.getOrientation());
+      request->send(200, "text/plain", String(bb::imu.getOrientation()));
     });
 
     server.on("/pose", HTTP_POST, [&](AsyncWebServerRequest *request) {
+      Pose2D robotPose = bb::odometry.getRobotPose();
       Serial.println("/pose");
-      String msg = String("") 
+      String msg = String("")
         + robotPose.translation.x + ";"
         + robotPose.translation.y + ";"
         + robotPose.rotation;
-        
+
       request->send(200, "text/plain", msg);
     });
 
     server.on("/debug", HTTP_POST, [&](AsyncWebServerRequest *request) {}, NULL,
-        [&](AsyncWebServerRequest* request, uint8_t* data_website, size_t len, size_t index, size_t total) {
-          sscanf(make_string(data_website, len), "%d", &debug);
+      [&](AsyncWebServerRequest* request, uint8_t* data_website, size_t len, size_t index, size_t total) {
+        sscanf(make_string(data_website, len), "%d", &debug);
 
-          Serial.println("/debug");
-          Serial.println(debug);
-          request->send(200);
-    });
+        Serial.println("/debug");
+        Serial.println(debug);
+        request->send(200);
+      }
+    );
 
     server.on("/motor", HTTP_POST, [](AsyncWebServerRequest* request){}, NULL,
-        [&](AsyncWebServerRequest* request, uint8_t* data_website, size_t len, size_t index, size_t total) {
-          Serial.println("/motor");
-          
-          sscanf(make_string(data_website, len), "%d;%d;%d;%d;%d", 
-            &(motor_speed[0]), 
-            &(motor_speed[1]), 
-            &(motor_speed[2]), 
-            &(motor_speed[3]), 
-            &(motor_speed[4]));
+      [&](AsyncWebServerRequest* request, uint8_t* data_website, size_t len, size_t index, size_t total) {
+        Serial.println("/motor");
 
-          timeOfLastCommand = millis();
-          lastCommand = MOTOR_TEST;
+        sscanf(make_string(data_website, len), "%d;%d;%d;%d;%d",
+          &bb::webServer.motorTestRequest.motorFrontLeftSpeed,
+          &bb::webServer.motorTestRequest.motorFrontRightSpeed,
+          &bb::webServer.motorTestRequest.motorRearLeftSpeed,
+          &bb::webServer.motorTestRequest.motorRearRightSpeed,
+          &bb::webServer.motorTestRequest.printerSpeed
+        );
 
-          request->send(200);
-    });
-    
+        bb::webServer.timeOfLastCommand = millis();
+        bb::webServer.lastCommand = Command::MOTOR_TEST;
+
+        request->send(200);
+      }
+    );
+
     server.on("/drive", HTTP_POST, [](AsyncWebServerRequest* request){}, NULL,
-        [&](AsyncWebServerRequest* request, uint8_t* data_website, size_t len, size_t index, size_t total) {
-          Serial.println("/drive");
-          
-          sscanf(make_string(data_website, len), "%d;%d;%d;%d", 
-            &driveRequest.x_pwm, 
-            &driveRequest.a_pwm, 
-            &driveRequest.p_pwm, 
-            &driveRequest.duration);
+      [&](AsyncWebServerRequest* request, uint8_t* data_website, size_t len, size_t index, size_t total) {
+        Serial.println("/drive");
 
-          timeOfLastCommand = millis();
-          lastCommand = DRIVE;
+        sscanf(make_string(data_website, len), "%d;%d;%d;%d",
+          &bb::webServer.driveRequest.x_pwm,
+          &bb::webServer.driveRequest.a_pwm,
+          &bb::webServer.driveRequest.p_pwm,
+          &bb::webServer.driveRequest.duration
+        );
 
-          request->send(200);
-    });
+        bb::webServer.timeOfLastCommand = millis();
+        bb::webServer.lastCommand = Command::DRIVE;
+
+        request->send(200);
+      }
+    );
 
     server.on("/drive_imu", HTTP_POST, [](AsyncWebServerRequest* request){}, NULL,
-        [&](AsyncWebServerRequest* request, uint8_t* data_website, size_t len, size_t index, size_t total) {
-          Serial.println("/drive_imu");
-          
-          sscanf(make_string(data_website, len), "%d;%f;%d;%d", 
-            &driveIMURequest.vx, 
-            &driveIMURequest.va, 
-            &driveIMURequest.p, 
-            &driveIMURequest.duration);
+      [&](AsyncWebServerRequest* request, uint8_t* data_website, size_t len, size_t index, size_t total) {
+        Serial.println("/drive_imu");
 
-          //Serial.println((const char*)data_website);
-          //Serial.println(driveIMURequest.vx);
-          //Serial.println(driveIMURequest.va);
-          //Serial.println(driveIMURequest.p);
-          //Serial.println(driveIMURequest.duration);
+        sscanf(make_string(data_website, len), "%d;%f;%d;%d",
+          &bb::webServer.driveIMURequest.vx,
+          &bb::webServer.driveIMURequest.va,
+          &bb::webServer.driveIMURequest.p,
+          &bb::webServer.driveIMURequest.duration
+        );
 
-          timeOfLastCommand = millis();
-          lastCommand = DRIVE_IMU;
+        //Serial.println((const char*)data_website);
+        //Serial.println(driveIMURequest.vx);
+        //Serial.println(driveIMURequest.va);
+        //Serial.println(driveIMURequest.p);
+        //Serial.println(driveIMURequest.duration);
 
-          request->send(200);
-    });
+        bb::webServer.timeOfLastCommand = millis();
+        bb::webServer.lastCommand = Command::DRIVE_IMU;
+
+        request->send(200);
+      }
+    );
 
     server.on("/goto_point", HTTP_POST, [](AsyncWebServerRequest* request){}, NULL,
-        [&](AsyncWebServerRequest* request, uint8_t* data_website, size_t len, size_t index, size_t total) {
-          Serial.println("/goto_point");
-          
-          sscanf(make_string(data_website, len), "%lf;%lf;%d", 
-            &gotoPointRequest.target.x, 
-            &gotoPointRequest.target.y, 
-            &gotoPointRequest.p_pwm);
+      [&](AsyncWebServerRequest* request, uint8_t* data_website, size_t len, size_t index, size_t total) {
+        Serial.println("/goto_point");
 
-          /*
-          Serial.print(gotoPointRequest.target.x);
-          Serial.print(",");
-          Serial.print(gotoPointRequest.target.y);
-          Serial.print(",");
-          Serial.print(gotoPointRequest.p_pwm);
-          */
-          
-          timeOfLastCommand = millis();
-          lastCommand = GOTO;
+        sscanf(make_string(data_website, len), "%lf;%lf;%d",
+          &bb::webServer.gotoPointRequest.target.x,
+          &bb::webServer.gotoPointRequest.target.y,
+          &bb::webServer.gotoPointRequest.p_pwm
+        );
 
-          request->send(200);
-    });
+        /*
+        Serial.print(gotoPointRequest.target.x);
+        Serial.print(",");
+        Serial.print(gotoPointRequest.target.y);
+        Serial.print(",");
+        Serial.print(gotoPointRequest.p_pwm);
+        */
+
+        bb::webServer.timeOfLastCommand = millis();
+        bb::webServer.lastCommand = Command::GOTO;
+
+        request->send(200);
+      }
+    );
   }
 
 
-  IPAddress gerServerIP() {
-    return ipAddress;
+  String getStatusMotionString() const {
+    if (bb::behavior.isMoving()) {
+      return "moving";
+    } else {
+      return "stopped";
+    }
   }
 
-  void log(const char* msg) {
-    message += msg;
-    message += '\n';
-    Serial.print(message);
+  String getImuStatusString() const {
+    if (bb::imu.isConnected()) {
+      return "ok";
+    } else {
+      return "failed to connect";
+    }
   }
 };
 
+extern WebServerClass WebServer;
 
-#endif // ChalkWebServerAsync_H
+#endif // WEB_SERVER_H
