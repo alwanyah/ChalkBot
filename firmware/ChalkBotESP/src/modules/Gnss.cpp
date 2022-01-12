@@ -3,18 +3,30 @@
 #include "../Config.h"
 #include "../util/Logger.h"
 
+class NullStream : public Stream {
+  virtual int available() override {
+    return 0;
+  };
+  virtual int read() override {
+    return 0;
+  };
+  virtual int peek() override {
+    return 0;
+  };
+  virtual void flush() override {};
+  virtual size_t write(uint8_t) override {
+    return 0;
+  }
+};
+
+static NullStream nullStream;
+
 static constexpr int INIT_ATTEMPTS = 5;
 static constexpr size_t RTCM_BUFFER_SIZE = 2048;
 
 static constexpr unsigned long NTRIP_RETRY_MILLIS = 2000;
 
 static Logger logger("GNSS");
-
-// static WiFiClient ntrip_client;
-// static char nmea_buffer[NMEA_BUFFER_SIZE];
-// static size_t nmea_buffer_head = 0;
-// static size_t nmea_buffer_tail = 0;
-// static bool nmea_need_sync = true;
 
 static void logData();
 
@@ -208,6 +220,7 @@ bool Gnss::ntripConnect() {
 }
 
 void Gnss::ntripDisconnect() {
+  base.setNMEAOutputPort(nullStream);
   ntripClient.stop();
   ntripConnected = false;
   logger.log_warn("Ntrip disconnected.");
