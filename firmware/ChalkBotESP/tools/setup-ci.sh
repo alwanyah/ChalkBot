@@ -5,7 +5,7 @@ set -ex
 cd ~
 
 apt-get update
-apt-get install wget -y
+apt-get install wget python-is-python3 python3-serial -y
 
 wget -nv https://downloads.arduino.cc/arduino-cli/arduino-cli_latest_Linux_64bit.tar.gz
 tar xf arduino-cli_latest_Linux_64bit.tar.gz
