@@ -1,0 +1,9 @@
+image: ubuntu:latest
+
+ChalkBotFirmware:
+  stage: build
+  before_script:
+    - firmware/ChalkBotESP/tools/setup-ci.sh
+  script:
+    - cd firmware/ChalkBotESP
+    - tools/build.sh ci
