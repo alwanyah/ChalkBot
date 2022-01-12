@@ -3,29 +3,6 @@
 #include "../Config.h"
 #include "../util/Logger.h"
 
-class NullStream : public Stream {
-  virtual int available() override {
-    return 0;
-  };
-  virtual int read() override {
-    return 0;
-  };
-  virtual int peek() override {
-    return 0;
-  };
-  virtual void flush() override {};
-  virtual size_t write(uint8_t) override {
-    return 0;
-  }
-};
-
-static NullStream nullStream;
-
-static constexpr int INIT_ATTEMPTS = 5;
-static constexpr size_t RTCM_BUFFER_SIZE = 2048;
-
-static constexpr unsigned long NTRIP_RETRY_MILLIS = 2000;
-
 static Logger logger("GNSS");
 
 static void logData();
@@ -100,6 +77,8 @@ bool Gnss::begin() {
 
     // base.setProcessNMEAMask(SFE_UBLOX_FILTER_NMEA_GGA);
 
+    base.setNMEAOutputPort(*this);
+
     logger.log_info("GNSS initialized.");
     return true;
   }
@@ -118,6 +97,7 @@ bool Gnss::update() {
   bool hasUpdate = false;
 
   if (ntripConnect()) {
+    bb::gnss.ntripNmeaBytesSent = ntripSendNMEA();
     bb::gnss.ntripRtcmByesReceived = ntripReceiveRTCM();
     if (bb::gnss.ntripNmeaBytesSent != 0 || bb::gnss.ntripRtcmByesReceived != 0) {
       hasUpdate = true;
@@ -214,16 +194,32 @@ bool Gnss::ntripConnect() {
     last_failed_attempt = millis();
     return false;
   }
+  nmea_buffer_head = 0;
+  nmea_buffer_tail = 0;
+  nmea_need_sync = true;
+  ntripConnected = true;
   logger.log_info("Ntrip connected.");
-  base.setNMEAOutputPort(ntripClient);
   return true;
 }
 
 void Gnss::ntripDisconnect() {
-  base.setNMEAOutputPort(nullStream);
   ntripClient.stop();
   ntripConnected = false;
   logger.log_warn("Ntrip disconnected.");
+}
+
+size_t Gnss::ntripSendNMEA() {
+  size_t nmea_size = nmea_buffer_tail - nmea_buffer_head;
+  if (nmea_size == 0) {
+    return 0;
+  }
+  int written = ntripClient.write(&nmea_buffer[nmea_buffer_head], nmea_size);
+  if (written < 0) {
+    ntripDisconnect();
+    return 0;
+  }
+  nmea_buffer_head += written;
+  return written;
 }
 
 size_t Gnss::ntripReceiveRTCM() {
@@ -246,6 +242,32 @@ size_t Gnss::ntripReceiveRTCM() {
     }
   } while (size == sizeof buffer);
   return total_read;
+}
+
+size_t Gnss::write(uint8_t incoming) {
+  if (!ntripConnected) {
+    return 1;
+  }
+  if (nmea_need_sync && incoming != '$') {
+    return 1;
+  }
+  nmea_need_sync = false;
+  if (nmea_buffer_tail == sizeof nmea_buffer) {
+    if (nmea_buffer_head == 0) {
+      logger.log_warn("NMEA buffer full!");
+      nmea_need_sync = true;
+      return 0;
+    }
+    size_t size = nmea_buffer_tail - nmea_buffer_head;
+    if (size != 0) {
+      memmove(&nmea_buffer[0], &nmea_buffer[nmea_buffer_head], size);
+    }
+    nmea_buffer_head = 0;
+    nmea_buffer_tail = size;
+  }
+  nmea_buffer[nmea_buffer_tail] = incoming;
+  ++nmea_buffer_tail;
+  return 1;
 }
 
 static void logData() {

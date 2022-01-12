@@ -51,7 +51,7 @@ bool Net::init(const char *ssid, const char *password)
     {
         auto writer = logger.writer_info();
         writer.print("connecting to: ");
-        writer.print(WiFi.softAPIP());
+        writer.print(ssid);
         writer.finish();
     }
     WiFi.begin(ssid, password);
@@ -59,6 +59,7 @@ bool Net::init(const char *ssid, const char *password)
         delay(500); // FIXME
         Serial.print(".");
     }
+    Serial.println();
 
     /*
     // connect to existing wifi
