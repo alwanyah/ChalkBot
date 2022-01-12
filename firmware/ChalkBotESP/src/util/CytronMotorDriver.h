@@ -4,7 +4,6 @@
 #define CYTRON_MOTOR_DRIVER_H
 
 #include <Arduino.h>
-#include <stdint.h>
 
 enum MODE {
   PWM_DIR,

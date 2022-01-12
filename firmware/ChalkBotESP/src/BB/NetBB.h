@@ -1,10 +1,10 @@
 #ifndef NET_BB_H
 #define NET_BB_H
 
-#include <IPAddress.h>
+#include <Arduino.h>
 
 class NetBB {
-    friend class NetClass;
+    friend class Net;
     
     IPAddress localAddress;
 

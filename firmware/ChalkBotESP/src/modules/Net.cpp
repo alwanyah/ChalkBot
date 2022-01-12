@@ -1,17 +1,15 @@
 #include "Net.h"
-#include "BB.h"
-#include "Logger.h"
-#include "Config.h"
+#include "../BB.h"
+#include "../Config.h"
+#include "../util/Logger.h"
 
 #include <WiFi.h>
-
-NetClass Net;
 
 static Logger logger("net");
 
 // extracted from ChalkWebServerAsync.h
 // FIXME: should be replaced
-bool NetClass::initAP(const char *ssid, const char *password)
+bool Net::initAP(const char *ssid, const char *password)
 {
     logger.log_info("Initialising WiFi as access point...");
 
@@ -44,7 +42,7 @@ bool NetClass::initAP(const char *ssid, const char *password)
 
 // extracted from ChalkWebServerAsync.h
 // FIXME: should be replaced
-bool NetClass::init(const char *ssid, const char *password)
+bool Net::init(const char *ssid, const char *password)
 {
     logger.log_info("Initialising WiFi as station...");
 
@@ -85,10 +83,10 @@ bool NetClass::init(const char *ssid, const char *password)
     return true;
 }
 
-bool NetClass::begin() {
+bool Net::begin() {
     return initAP(config::wifi::AP_SSID, config::wifi::AP_PASSPHRASE);
 }
 
-void NetClass::update() {
+void Net::update() {
     // TODO
 }

@@ -10,7 +10,6 @@
 
 namespace config {
     namespace pins {
-        // FIXME: Pins fixen
         /* aus ChalkBotESP.ino:
             // mapping stm32 feather -> esp32 feather
             // PWM 5-> 4; 6-> 18; 9-> 19; 10-> 16
@@ -25,22 +24,19 @@ namespace config {
             { A0, A1 }  // motorRearRight : PWM =  16, DIR = A9
             );
         */
-        constexpr uint8_t motorFrontLeftPwm = 0; // 4;
-        constexpr uint8_t motorFrontLeftDir = 0; // A12;
+        constexpr uint8_t motorFrontLeftPwm = A7;
+        constexpr uint8_t motorFrontLeftDir = A8;
 
-        constexpr uint8_t motorFrontRightPwm = 0; // 18;
-        constexpr uint8_t motorFrontRightDir = 0; // A11;
+        constexpr uint8_t motorFrontRightPwm = 16;
+        constexpr uint8_t motorFrontRightDir = 17;
 
-        constexpr uint8_t motorRearLeftPwm = 0; // 19;
-        constexpr uint8_t motorRearLeftDir = 0; // A10;
+        constexpr uint8_t motorRearLeftPwm = A12;
+        constexpr uint8_t motorRearLeftDir = A11;
 
-        constexpr uint8_t motorRearRightPwm = 0; // 16;
-        constexpr uint8_t motorRearRightDir = 0; // A9;
+        constexpr uint8_t motorRearRightPwm = A0;
+        constexpr uint8_t motorRearRightDir = A1;
 
-        /* aus ChalkBotESP.ino:
-            // GPIO23 = SCK
-        */
-        // FIXME: Was bedeutet das ^ ?
+        // GPIO23 = SCK
         constexpr uint8_t printPwm = 21;
         constexpr uint8_t printPin1 = A5; // FIXME: pin1 = forward, pin2 = backward?
         constexpr uint8_t printPin2 = A6;
@@ -57,8 +53,6 @@ namespace config {
     }
 
     namespace odometry {
-        // FIXME: why float and not double?
-
         // fixed parameters
         static constexpr float wheelDiameter = 135.0f; // mm
         static constexpr float maxRPM = 313.0f; // max RPM of the motors with PWM 255

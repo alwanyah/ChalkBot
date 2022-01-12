@@ -11,7 +11,6 @@ class Logger {
 
 public:
     enum Verbosity {
-        NONE,
         ERROR,
         WARN,
         INFO,

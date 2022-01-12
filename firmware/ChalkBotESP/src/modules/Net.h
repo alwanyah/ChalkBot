@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-class NetClass {
+class Net {
 public:
     // FIXME: remove these, use begin
     bool initAP(const char *ssid, const char *password);
@@ -12,7 +12,5 @@ public:
     bool begin();
     void update();
 };
-
-extern NetClass Net;
 
 #endif

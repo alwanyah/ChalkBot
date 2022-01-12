@@ -1,38 +1,29 @@
-#ifndef CHALKBOT_MOTOR_H
-#define CHALKBOT_MOTOR_H
+#ifndef CHALKBOT_MOTOR_CONTROLLER_H
+#define CHALKBOT_MOTOR_CONTROLLER_H
 
-#include "CytronMotorDriver.h"
-#include "BB.h"
+#include "../BB.h"
 
-class ChalkbotMotorClass
+class ChalkbotMotorController
 {
-  public:
-    struct MotorPins {
-      uint8_t pwmPin;
-      uint8_t dirPin;
-    };
+public:
+  void update() {
+    if (!bb::chalkbotMotorController.enabled) {
+      currentX = 0.0f;
+      currentRotation = 0.0f;
+      return;
+    }
 
-    ChalkbotMotorClass (
-      const MotorPins& pins0,
-      const MotorPins& pins1,
-      const MotorPins& pins2,
-      const MotorPins& pins3
-    )
-      :
-      motorFrontLeft( pins0.pwmPin, pins0.dirPin),
-      motorFrontRight(pins1.pwmPin, pins1.dirPin),
-      motorRearLeft(  pins2.pwmPin, pins2.dirPin),
-      motorRearRight( pins3.pwmPin, pins3.dirPin)
-    {}
-
-  void setMotorVelocity(int16_t v0, int16_t v1, int16_t v2, int16_t v3)
-  {
-    motorFrontLeft.setSpeed (v0);
-    motorFrontRight.setSpeed(v1);
-    motorRearLeft.setSpeed  (v2);
-    motorRearRight.setSpeed (v3);
+    int16_t targetForwardSpeed = bb::chalkbotMotorController.targetForwardSpeed;
+    int16_t targetRotationSpeed = bb::chalkbotMotorController.targetRotationSpeed;
+    bool smooth = bb::chalkbotMotorController.smooth;
+    if (smooth) {
+      setVelocitySmooth(targetForwardSpeed, targetRotationSpeed);
+    } else {
+      setVelocityDirect(targetForwardSpeed, targetRotationSpeed);
+    }
   }
 
+private:
   // methods for control
   // x - speed in the x direction
   // rotation - rotation speed
@@ -40,14 +31,16 @@ class ChalkbotMotorClass
   {
     // TODO: this is just a simple draft
     // NOTE: the signs depend on how the motors are built in
-    motorFrontLeft.setSpeed ( x - rotation);
-    motorFrontRight.setSpeed( x + rotation);
-    motorRearLeft.setSpeed  ( x - rotation);
-    motorRearRight.setSpeed ( x + rotation);
+    bb::chalkbotMotorDriver.setMotorVelocity(
+      x - rotation,
+      x + rotation,
+      x - rotation,
+      x + rotation
+    );
 
     // store the current command
-    bb::chalkbotMotor.last_x = x;
-    bb::chalkbotMotor.last_rotation = rotation;
+    bb::chalkbotMotorController.currentForwardSpeed = x;
+    bb::chalkbotMotorController.currentRotationSpeed = rotation;
   }
 
   void setVelocitySmooth(float x, float rotation)
@@ -80,17 +73,10 @@ class ChalkbotMotorClass
     float currentX = 0.0f;
     float currentRotation = 0.0f; //
 
+    // FIXME: move to Config.h
     // go to max in 1s
-    float maxAcceleration = 512.0f; //255.0f / 1.0f; // x/s^2, x in [0,255]
+    static constexpr float maxAcceleration = 512.0f; //255.0f / 1.0f; // x/s^2, x in [0,255]
     unsigned long lastUpdateTime = 0; // last call of setVelocitySmooth in ms
-
-  // public:
-    CytronMD20A motorFrontLeft;
-    CytronMD20A motorFrontRight;
-    CytronMD20A motorRearLeft;
-    CytronMD20A motorRearRight;
 };
-
-extern ChalkbotMotorClass ChalkbotMotor;
 
 #endif

@@ -1,14 +1,11 @@
 #include "Imu.h"
-#include "Logger.h"
-#include "BB.h"
-
-#include "math/Common.h"
-
-ImuClass Imu;
+#include "../BB.h"
+#include "../util/Logger.h"
+#include "../util/math/Common.h"
 
 static Logger logger("IMU");
 
-bool ImuClass::begin() {
+bool Imu::begin() {
     logger.log_info("Initializing IMU...");
     if(!bno.begin()) {
         logger.log_info("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
@@ -21,7 +18,7 @@ bool ImuClass::begin() {
     }
 }
 
-void ImuClass::update() {
+void Imu::update() {
     // update orientation
     imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
     double orientation = Math::fromDegrees(-euler.x());

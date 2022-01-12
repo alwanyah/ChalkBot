@@ -1,36 +1,24 @@
 #include "Gnss.h"
-#include "BB.h"
-#include "Logger.h"
-
-#include <WiFi.h>
+#include "../BB.h"
+#include "../Config.h"
+#include "../util/Logger.h"
 
 static constexpr int INIT_ATTEMPTS = 5;
-static constexpr size_t NMEA_BUFFER_SIZE = 1024;
 static constexpr size_t RTCM_BUFFER_SIZE = 2048;
 
-static constexpr const char *NTRIP_HOST = "www.sapos-be-ntrip.de";
-static constexpr uint16_t NTRIP_PORT = 2101;
-static constexpr const char *NTRIP_MOUNT_POINT = "VRS_3_4G_BE";
 static constexpr unsigned long NTRIP_RETRY_MILLIS = 2000;
-
-// base64 saposbln426-1:gbm10-40hu
-// yes, this sent in plaintext over an unencrypted connection
-static constexpr const char *NTRIP_AUTHORIZATION = "c2Fwb3NibG40MjYtMTpnYm0xMC00MGh1";
-
-GnssClass Gnss;
 
 static Logger logger("GNSS");
 
-static WiFiClient ntrip_client;
-static bool ntrip_connected = false;
-static char nmea_buffer[NMEA_BUFFER_SIZE];
-static size_t nmea_buffer_head = 0;
-static size_t nmea_buffer_tail = 0;
-static bool nmea_need_sync = true;
+// static WiFiClient ntrip_client;
+// static char nmea_buffer[NMEA_BUFFER_SIZE];
+// static size_t nmea_buffer_head = 0;
+// static size_t nmea_buffer_tail = 0;
+// static bool nmea_need_sync = true;
 
 static void logData();
 
-bool GnssClass::begin() {
+bool Gnss::begin() {
   for (int attempt = 1; attempt < INIT_ATTEMPTS; ++attempt) {
     if (attempt == 2) {
       logger.log_warn("Resetting GNSS sensor.");
@@ -108,7 +96,7 @@ bool GnssClass::begin() {
   return false;
 }
 
-bool GnssClass::update() {
+bool Gnss::update() {
   unsigned long updateBegin = millis();
 
   if (!base.checkUblox()) {
@@ -118,7 +106,6 @@ bool GnssClass::update() {
   bool hasUpdate = false;
 
   if (ntripConnect()) {
-    bb::gnss.ntripNmeaBytesSent = ntripSendNMEA();
     bb::gnss.ntripRtcmByesReceived = ntripReceiveRTCM();
     if (bb::gnss.ntripNmeaBytesSent != 0 || bb::gnss.ntripRtcmByesReceived != 0) {
       hasUpdate = true;
@@ -148,7 +135,7 @@ bool GnssClass::update() {
   return hasUpdate;
 }
 
-void GnssClass::updateHPPOSLLH(UBX_NAV_HPPOSLLH_data_t *data) {
+void Gnss::updateHPPOSLLH(UBX_NAV_HPPOSLLH_data_t *data) {
   if (data->flags.bits.invalidLlh) {
     bb::gnss.globalPositionValid = false;
     return;
@@ -162,7 +149,7 @@ void GnssClass::updateHPPOSLLH(UBX_NAV_HPPOSLLH_data_t *data) {
   bb::gnss.verticalAccuracy = data->vAcc / 1e4;
 }
 
-void GnssClass::updateRELPOSNED(UBX_NAV_RELPOSNED_data_t *data) {
+void Gnss::updateRELPOSNED(UBX_NAV_RELPOSNED_data_t *data) {
   bb::gnss.relativePositionValid = data->flags.bits.relPosValid;
   if (bb::gnss.relativePositionValid) {
     bb::gnss.relativePositionValid = true;
@@ -183,72 +170,55 @@ void GnssClass::updateRELPOSNED(UBX_NAV_RELPOSNED_data_t *data) {
   bb::gnss.correction = data->flags.bits.diffSoln;
 }
 
-bool GnssClass::ntripConnect() {
+bool Gnss::ntripConnect() {
   static unsigned long last_failed_attempt = 0;
-  if (ntrip_connected) {
+  if (ntripConnected) {
     return true;
   }
   if (millis() - last_failed_attempt < NTRIP_RETRY_MILLIS) {
     return false;
   }
-  if (!ntrip_client.connect(NTRIP_HOST, NTRIP_PORT)) {
+  if (!ntripClient.connect(config::ntrip::HOST, config::ntrip::PORT)) {
     logger.log_info("Failed to connect to Ntrip.");
     last_failed_attempt = millis();
     return false;
   }
-  String request = String("GET /") + NTRIP_MOUNT_POINT + " HTTP/1.1\r\n"
-    "Host: " + NTRIP_HOST + "\r\n"
+  String request = String("GET /") + config::ntrip::MOUNT_POINT + " HTTP/1.1\r\n"
+    "Host: " + config::ntrip::HOST + "\r\n"
     "User-Agent: ChalkBot/1.0\r\n"
     "Connection: close\r\n" // <- not actually, this is Ntrip, not HTTP
-    "Authorization: Basic " + NTRIP_AUTHORIZATION + "\r\n"
+    "Authorization: Basic " + config::ntrip::AUTHORIZATION + "\r\n"
     "\r\n";
 
-  ntrip_client.print(request);
-  String response = ntrip_client.readStringUntil('\n');
-  if (response != "ICY 200 OK\r" || !ntrip_client.find("\r\n")) {
+  ntripClient.print(request);
+  String response = ntripClient.readStringUntil('\n');
+  if (response != "ICY 200 OK\r" || !ntripClient.find("\r\n")) {
     auto writer = logger.writer_info();
     writer.print("Ntrip response: ");
     writer.print(response);
     writer.finish();
 
-    ntrip_client.stop();
+    ntripClient.stop();
     last_failed_attempt = millis();
     return false;
   }
-  nmea_buffer_head = 0;
-  nmea_buffer_tail = 0;
-  nmea_need_sync = true;
-  ntrip_connected = true;
   logger.log_info("Ntrip connected.");
+  base.setNMEAOutputPort(ntripClient);
   return true;
 }
 
-void GnssClass::ntripDisconnect() {
-  ntrip_client.stop();
-  ntrip_connected = false;
+void Gnss::ntripDisconnect() {
+  ntripClient.stop();
+  ntripConnected = false;
   logger.log_warn("Ntrip disconnected.");
 }
 
-size_t GnssClass::ntripSendNMEA() {
-  size_t nmea_size = nmea_buffer_tail - nmea_buffer_head;
-  if (nmea_size == 0) {
-    return 0;
-  }
-  int written = ntrip_client.write(&nmea_buffer[nmea_buffer_head], nmea_size);
-  if (written < 0) {
-    ntripDisconnect();
-    return 0;
-  }
-  nmea_buffer_head += written;
-  return written;
-}
-
-size_t GnssClass::ntripReceiveRTCM() {
+size_t Gnss::ntripReceiveRTCM() {
   size_t total_read = 0;
   uint8_t buffer[RTCM_BUFFER_SIZE];
   int size;
   do {
-    size = ntrip_client.read(buffer, sizeof buffer);
+    size = ntripClient.read(buffer, sizeof buffer);
     if (size < 0) {
       ntripDisconnect();
       break;
@@ -257,7 +227,7 @@ size_t GnssClass::ntripReceiveRTCM() {
         logger.log_warn("RTCM buffer full.");
       }
       total_read += size;
-      if (!Gnss.base.pushRawData(buffer, size)) {
+      if (!base.pushRawData(buffer, size)) {
         logger.log_error("Failed to send RTCM data.");
       }
     }
@@ -265,35 +235,10 @@ size_t GnssClass::ntripReceiveRTCM() {
   return total_read;
 }
 
-void SFE_UBLOX_GNSS::processNMEA(char incoming) {
-  if (!ntrip_connected) {
-    return;
-  }
-  if (nmea_need_sync && incoming != '$') {
-    return;
-  }
-  nmea_need_sync = false;
-  if (nmea_buffer_tail == sizeof nmea_buffer) {
-    if (nmea_buffer_head == 0) {
-      logger.log_warn("NMEA buffer full!");
-      nmea_need_sync = true;
-      return;
-    }
-    size_t size = nmea_buffer_tail - nmea_buffer_head;
-    if (size != 0) {
-      memmove(&nmea_buffer[0], &nmea_buffer[nmea_buffer_head], size);
-    }
-    nmea_buffer_head = 0;
-    nmea_buffer_tail = size;
-  }
-  nmea_buffer[nmea_buffer_tail] = incoming;
-  ++nmea_buffer_tail;
-}
-
 static void logData() {
   auto writer = logger.writer_debug();
   writer.print("ms = ");
-  writer.printf("%3zu", bb::gnss.getUpdateDuration());
+  writer.printf("%3lu", bb::gnss.getUpdateDuration());
   writer.print(", ntrip send = ");
   writer.printf("%4zu", bb::gnss.getNtripNmeaBytesSent());
   writer.print(" recv = ");

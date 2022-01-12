@@ -4,7 +4,9 @@ namespace bb {
     ImuBB imu;
     GnssBB gnss;
     OdometryBB odometry;
-    ChalkbotMotorBB chalkbotMotor;
+    ChalkbotMotorDriverBB chalkbotMotorDriver;
+    ChalkbotMotorControllerBB chalkbotMotorController;
+    PrintDriverBB printDriver;
     NetBB net;
     WebServerBB webServer;
     BehaviorBB behavior;

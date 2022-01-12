@@ -2,13 +2,15 @@
 #ifndef WEB_SERVER_H
 #define WEB_SERVER_H
 
+#include <Arduino.h>
+
 //https://github.com/me-no-dev/ESPAsyncWebServer
 #include <ESPAsyncWebServer.h>
 
-#include "math/Vector2.h"
-#include "BB.h"
+#include "../BB.h"
+#include "../util/math/Vector2.h"
 
-class WebServerClass
+class WebServer
 {
   AsyncWebServer server;
 
@@ -24,7 +26,7 @@ class WebServerClass
 
 public:
 
-  WebServerClass() : server(80) {}
+  WebServer() : server(80) {}
 
   void begin() {
     registerRequests();
@@ -88,7 +90,7 @@ private:
 
     server.on("/debug", HTTP_POST, [&](AsyncWebServerRequest *request) {}, NULL,
       [&](AsyncWebServerRequest* request, uint8_t* data_website, size_t len, size_t index, size_t total) {
-        sscanf(make_string(data_website, len), "%d", &debug);
+        sscanf(make_string(data_website, len), "%" SCNd16, &debug);
 
         Serial.println("/debug");
         Serial.println(debug);
@@ -100,7 +102,7 @@ private:
       [&](AsyncWebServerRequest* request, uint8_t* data_website, size_t len, size_t index, size_t total) {
         Serial.println("/motor");
 
-        sscanf(make_string(data_website, len), "%d;%d;%d;%d;%d",
+        sscanf(make_string(data_website, len), "%" SCNd16 ";%" SCNd16 ";%" SCNd16 ";%" SCNd16 ";%" SCNd16,
           &bb::webServer.motorTestRequest.motorFrontLeftSpeed,
           &bb::webServer.motorTestRequest.motorFrontRightSpeed,
           &bb::webServer.motorTestRequest.motorRearLeftSpeed,
@@ -119,7 +121,7 @@ private:
       [&](AsyncWebServerRequest* request, uint8_t* data_website, size_t len, size_t index, size_t total) {
         Serial.println("/drive");
 
-        sscanf(make_string(data_website, len), "%d;%d;%d;%d",
+        sscanf(make_string(data_website, len), "%" SCNd16 ";%" SCNd16 ";%" SCNd16 ";%" SCNd16,
           &bb::webServer.driveRequest.x_pwm,
           &bb::webServer.driveRequest.a_pwm,
           &bb::webServer.driveRequest.p_pwm,
@@ -137,7 +139,7 @@ private:
       [&](AsyncWebServerRequest* request, uint8_t* data_website, size_t len, size_t index, size_t total) {
         Serial.println("/drive_imu");
 
-        sscanf(make_string(data_website, len), "%d;%f;%d;%d",
+        sscanf(make_string(data_website, len), "%" SCNd16 ";%f;%" SCNd16 ";%" SCNd16,
           &bb::webServer.driveIMURequest.vx,
           &bb::webServer.driveIMURequest.va,
           &bb::webServer.driveIMURequest.p,
@@ -161,7 +163,7 @@ private:
       [&](AsyncWebServerRequest* request, uint8_t* data_website, size_t len, size_t index, size_t total) {
         Serial.println("/goto_point");
 
-        sscanf(make_string(data_website, len), "%lf;%lf;%d",
+        sscanf(make_string(data_website, len), "%lf;%lf;%" SCNd16,
           &bb::webServer.gotoPointRequest.target.x,
           &bb::webServer.gotoPointRequest.target.y,
           &bb::webServer.gotoPointRequest.p_pwm
@@ -200,7 +202,5 @@ private:
     }
   }
 };
-
-extern WebServerClass WebServer;
 
 #endif // WEB_SERVER_H

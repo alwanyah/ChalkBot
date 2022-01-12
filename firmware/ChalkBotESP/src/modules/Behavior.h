@@ -1,12 +1,12 @@
 #ifndef BEHAVIOR_H
 #define BEHAVIOR_H
 
-class BehaviorClass {
+#include <Arduino.h>
+
+class Behavior {
 
 public:
     void update();
 };
-
-extern BehaviorClass Behavior;
 
 #endif

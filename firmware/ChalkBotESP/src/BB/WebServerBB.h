@@ -1,9 +1,8 @@
-
 #ifndef WEB_SERVER_BB_H
 #define WEB_SERVER_BB_H
 
 #include <Arduino.h>
-#include "math/Vector2.h"
+#include "../util/math/Vector2.h"
 
 // FIXME: Command vs Request
 // FIXME: camelCase vs snake_case
@@ -47,7 +46,7 @@ struct GotoPointRequest {
 
 class WebServerBB
 {
-  friend class WebServerClass;
+  friend class WebServer;
 
   Command lastCommand = Command::NONE;
 

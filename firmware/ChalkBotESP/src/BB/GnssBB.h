@@ -4,7 +4,7 @@
 #include <Arduino.h>
 
 class GnssBB {
-  friend class GnssClass;
+  friend class Gnss;
 
   bool globalPositionValid = false;
   double latitude = 0.0; // deg

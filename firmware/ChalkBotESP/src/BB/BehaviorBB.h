@@ -1,8 +1,10 @@
 #ifndef BEHAVIOR_BB_H
 #define BEHAVIOR_BB_H
 
+#include <Arduino.h>
+
 class BehaviorBB {
-    friend class BehaviorClass;
+    friend class Behavior;
 
     bool moving = false;
 

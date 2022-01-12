@@ -1,12 +1,13 @@
-#ifndef PRINTER_H
-#define PRINTER_H
+#ifndef PRINT_DRIVER_H
+#define PRINT_DRIVER_H
 
 #include <Arduino.h>
+#include "../BB.h"
 
-class PrinterClass
+class PrintDriver
 {
   public:
-    PrinterClass(uint8_t pinPwm, uint8_t pinDir1, uint8_t pinDir2)
+    PrintDriver(uint8_t pinPwm, uint8_t pinDir1, uint8_t pinDir2)
       :
       //pinPwm(pinPwm),
       pinDir1(pinDir1),
@@ -33,8 +34,10 @@ class PrinterClass
         pinPwm = pwmChannel;
     }
 
-    void setSpeed(int16_t speed)
-    {
+  public:
+    void update() {
+      int16_t speed = bb::printDriver.speed;
+
       // Make sure the speed is within the limit.
       if (speed > 255) {
         speed = 255;
@@ -64,7 +67,5 @@ class PrinterClass
     uint8_t pinDir1;
     uint8_t pinDir2;
 };
-
-extern PrinterClass Printer;
 
 #endif

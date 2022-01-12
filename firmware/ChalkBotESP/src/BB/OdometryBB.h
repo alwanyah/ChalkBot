@@ -1,10 +1,11 @@
 #ifndef ODOMETRY_BB_H
 #define ODOMETRY_BB_H
 
-#include "math/Pose2D.h"
+#include <Arduino.h>
+#include "../util/math/Pose2D.h"
 
 class OdometryBB {
-    friend class OdometryClass;
+    friend class Odometry;
 
     Pose2D robotPose;
 

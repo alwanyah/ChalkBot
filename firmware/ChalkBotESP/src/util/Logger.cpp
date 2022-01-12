@@ -30,10 +30,6 @@ void Logger::detach_listener(int id) {
 }
 
 void Logger::log(Verbosity message_verbosity, const std::string &message) const {
-    if (message_verbosity <= NONE) {
-        return;
-    }
-
     unsigned long ms = millis();
 
     for (Listener &listener : listeners) {

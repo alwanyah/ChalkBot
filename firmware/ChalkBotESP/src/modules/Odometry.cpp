@@ -1,9 +1,7 @@
 #include "Odometry.h"
-#include "BB.h"
-#include "Config.h"
-#include "Logger.h"
-
-OdometryClass Odometry;
+#include "../BB.h"
+#include "../Config.h"
+#include "../util/Logger.h"
 
 static Logger logger("odometry");
 
@@ -31,7 +29,7 @@ static float timeToDistance(float timeDelta, float pwm)
   return distance;
 }
 
-void OdometryClass::update() {
+void Odometry::update() {
     // update time
     unsigned long currentTime = millis();
     unsigned long timeSinceLastExecution = currentTime - lastUpdateTime;
@@ -41,8 +39,8 @@ void OdometryClass::update() {
 
     // the robot was driving with the past motion commands since the last frame.
     // update the odometry based on that information
-    int16_t last_x_PWM = bb::chalkbotMotor.getLastX();
-    //int16_t last_rotation_PWM = bb::chalkbotMotor.getLastRotation();
+    int16_t last_x_PWM = bb::chalkbotMotorController.getCurrentForwardSpeed();
+    // int16_t last_rotation_PWM = bb::chalkbotMotorController.getCurrentRotationSpeed();
 
     // use the direction directly from the IMU
     bb::odometry.robotPose.rotation = bb::imu.getOrientation();

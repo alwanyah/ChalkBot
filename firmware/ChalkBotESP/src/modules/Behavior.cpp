@@ -1,17 +1,13 @@
 #include "Behavior.h"
-#include "BB.h"
-#include "ChalkbotMotor.h"
-#include "Printer.h"
-#include "Logger.h"
-
-BehaviorClass Behavior;
+#include "../BB.h"
+#include "../util/Logger.h"
 
 static Logger logger("behavior");
 
 // FIXME: Convert all Serial.print to logger.log
 
 
-
+// FIXME: extract this into a different module
 // controller for closed loop rotation control
 static void driveWithTimeIMU(float x, float angle, int printSpeed)
 {
@@ -31,7 +27,7 @@ static void driveWithTimeIMU(float x, float angle, int printSpeed)
     // }
 
     // continuous correction
-    ChalkbotMotor.setVelocitySmooth(x, va);
+    bb::chalkbotMotorController.setVelocitySmooth(x, va);
 
     // prioritize turn correction
     /*
@@ -43,10 +39,10 @@ static void driveWithTimeIMU(float x, float angle, int printSpeed)
     */
 
     // print
-    Printer.setSpeed(printSpeed);
+    bb::printDriver.setSpeed(printSpeed);
 }
 
-void BehaviorClass::update() {
+void Behavior::update() {
     unsigned long elapsed = millis() - bb::webServer.getTimeOfLastCommand();
     auto command = bb::webServer.getLastCommand();
     bool stop = false;
@@ -58,13 +54,15 @@ void BehaviorClass::update() {
                 break;
             }
 
-            ChalkbotMotor.setMotorVelocity(
+            bb::chalkbotMotorController.disable();
+
+            bb::chalkbotMotorDriver.setMotorVelocity(
                 request.motorFrontLeftSpeed,
                 request.motorFrontRightSpeed,
                 request.motorRearLeftSpeed,
                 request.motorRearRightSpeed
             );
-            Printer.setSpeed(request.printerSpeed);
+            bb::printDriver.setSpeed(request.printerSpeed);
 
             bb::behavior.moving = true;
             break;
@@ -77,12 +75,12 @@ void BehaviorClass::update() {
                 break;
             }
 
-            // FIXME: sanity check parameters (conversion int16_t -> float)
-            ChalkbotMotor.setVelocitySmooth(request.x_pwm, request.a_pwm);
-            Printer.setSpeed(request.p_pwm);
+            bb::chalkbotMotorController.setVelocitySmooth(request.x_pwm, request.a_pwm);
+            bb::printDriver.setSpeed(request.p_pwm);
 
             Serial.println("DRIVE");
             bb::behavior.moving = true;
+            break;
         }
 
         case Command::DRIVE_IMU: {
@@ -112,6 +110,7 @@ void BehaviorClass::update() {
             // }
 
             bb::behavior.moving = true;
+            break;
         }
 
         case Command::GOTO: {
@@ -139,11 +138,11 @@ void BehaviorClass::update() {
 
                 // if the direction is wrong, correct first
                 if(abs(va) < maxRotationPWM) {
-                    ChalkbotMotor.setVelocitySmooth(vx, va);
+                    bb::chalkbotMotorController.setVelocitySmooth(vx, va);
                     // only print, when driving
-                    Printer.setSpeed(request.p_pwm);
+                    bb::printDriver.setSpeed(request.p_pwm);
                 } else {
-                    ChalkbotMotor.setVelocitySmooth(0, va);
+                    bb::chalkbotMotorController.setVelocitySmooth(0, va);
                 }
 
                 bb::behavior.moving = true;
@@ -162,6 +161,8 @@ void BehaviorClass::update() {
             //     //Serial.print(chalkWebServer.gotoPointRequest.p_pwm);
             //     Serial.println("");
             // }
+
+            break;
         }
 
 
@@ -171,8 +172,8 @@ void BehaviorClass::update() {
 
     if (stop)
     {
-        ChalkbotMotor.setVelocitySmooth(0, 0);
-        Printer.setSpeed(0);
+        bb::chalkbotMotorController.setVelocitySmooth(0, 0);
+        bb::printDriver.setSpeed(0);
         bb::behavior.moving = false;
     }
 }
