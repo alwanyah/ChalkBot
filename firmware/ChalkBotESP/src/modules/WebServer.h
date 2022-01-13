@@ -33,8 +33,6 @@ public:
     server.begin();
   }
 
-  void update();
-
 private:
   char* make_string(uint8_t* inputData, size_t len) {
     assert(len < sizeof(receive_buffer));

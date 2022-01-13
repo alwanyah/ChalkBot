@@ -54,9 +54,12 @@ void setup()
 
 void loop()
 {
+  net.update();
   imu_.update();
   gnss.update();
   odometry.update();
   behavior.update();
   chalkbotMotorController.update();
+  chalkbotMotorDriver.update();
+  printDriver.update();
 }

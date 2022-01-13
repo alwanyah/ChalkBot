@@ -89,5 +89,5 @@ bool Net::begin() {
 }
 
 void Net::update() {
-    // TODO
+    // TODO: switch network if needed
 }

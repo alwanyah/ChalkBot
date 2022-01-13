@@ -48,30 +48,30 @@ namespace config {
             //chalkWebServer.init("LAMBARUM", "DBiru1Sd90M.");
             //chalkWebServer.init("NAONET", "a1b0a1b0a1");
         */
-        static constexpr char AP_SSID[] = "chalkbot";
-        static constexpr char AP_PASSPHRASE[] = "a1b0a1b0a1";
+        constexpr char AP_SSID[] = "chalkbot";
+        constexpr char AP_PASSPHRASE[] = "a1b0a1b0a1";
     }
 
     namespace odometry {
         // fixed parameters
-        static constexpr float wheelDiameter = 135.0f; // mm
-        static constexpr float maxRPM = 313.0f; // max RPM of the motors with PWM 255
-        static constexpr float wheelCircumference = wheelDiameter * PI;
-        static constexpr float maxVelocity = wheelCircumference * maxRPM / 60.0f; // mm/s
+        constexpr float wheelDiameter = 135.0f; // mm
+        constexpr float maxRPM = 313.0f; // max RPM of the motors with PWM 255
+        constexpr float wheelCircumference = wheelDiameter * PI;
+        constexpr float maxVelocity = wheelCircumference * maxRPM / 60.0f; // mm/s
 
         // measured factor for the current chalkbot
-        static constexpr float correctionFactor = 4.0 / 3.0;
+        constexpr float correctionFactor = 4.0 / 3.0;
 
     }
 
     namespace ntrip {
-        static constexpr char HOST[] = "www.sapos-be-ntrip.de";
-        static constexpr uint16_t PORT = 2101;
-        static constexpr char MOUNT_POINT[] = "VRS_3_4G_BE";
+        constexpr char HOST[] = "www.sapos-be-ntrip.de";
+        constexpr uint16_t PORT = 2101;
+        constexpr char MOUNT_POINT[] = "VRS_3_4G_BE";
 
         // base64 saposbln426-1:gbm10-40hu
         // yes, this sent in plaintext over an unencrypted connection
-        static constexpr char AUTHORIZATION[] = "c2Fwb3NibG40MjYtMTpnYm0xMC00MGh1";
+        constexpr char AUTHORIZATION[] = "c2Fwb3NibG40MjYtMTpnYm0xMC00MGh1";
     }
 }
 

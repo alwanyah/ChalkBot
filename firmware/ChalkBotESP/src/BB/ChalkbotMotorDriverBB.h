@@ -12,22 +12,6 @@ class ChalkbotMotorDriverBB {
     int16_t rearRightSpeed = 0;
 
 public:
-    // int16_t getFrontLeftSpeed() const {
-    //     return frontLeftSpeed;
-    // }
-
-    // int16_t getFrontRightSpeed() const {
-    //     return frontRightSpeed;
-    // }
-
-    // int16_t getRearLeftSpeed() const {
-    //     return rearLeftSpeed;
-    // }
-
-    // int16_t getRearRightSpeed() const {
-    //     return rearRightSpeed;
-    // }
-
     void setMotorVelocity(int16_t frontLeft, int16_t frontRight, int16_t rearLeft, int16_t rearRight) {
         frontLeftSpeed = frontLeft;
         frontRightSpeed = frontRight;
