@@ -31,6 +31,8 @@ static Net net;
 static WebServer webServer;
 static Behavior behavior;
 
+static WiFiServer logServer(8001);
+
 
 // The setup routine runs once when you press reset.
 void setup()
@@ -38,7 +40,7 @@ void setup()
   Serial.begin(115200);
   while (!Serial) {};
 
-  Logger::attach_listener(Serial, {{ "all", Logger::INFO }});
+  Logger::attach_listener(Serial, {{ "all", Logger::INFO });
 
   Wire.begin(); // setup I2C master
   //Wire.setClock(400000); // set Clock to 400kHz
@@ -49,11 +51,18 @@ void setup()
   imu_.begin();
   gnss.begin();
 
+  logServer.begin();
+
   delay(1000); // FIXME
 }
 
 void loop()
 {
+  WiFiClient logClient = logServer.available();
+  if (logClient) {
+    Logger::attach_listener_managed(new auto(logClient), {{ "all", Logger::DEBUG }});
+  }
+
   net.update();
   imu_.update();
   gnss.update();

@@ -14,6 +14,7 @@ bool Imu::begin() {
         logger.log_info("BNO055 connected!");
         delay(1000); // FIXME: ist das nötig?
         bno.setExtCrystalUse(true);
+        bb::imu.connected = true;
         return true;
     }
 }

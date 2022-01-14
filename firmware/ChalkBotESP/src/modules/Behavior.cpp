@@ -78,7 +78,7 @@ void Behavior::update() {
             bb::chalkbotMotorController.setVelocitySmooth(request.x_pwm, request.a_pwm);
             bb::printDriver.setSpeed(request.p_pwm);
 
-            Serial.println("DRIVE");
+            logger.log_debug("DRIVE");
             bb::behavior.moving = true;
             break;
         }
@@ -96,18 +96,16 @@ void Behavior::update() {
                 request.p
             );
 
-            // FIXME: logger
-            // if(chalkWebServer.debug == 1) {
-            //     Serial.print("DRIVE_IMU: ");
-            //     Serial.print(chalkWebServer.driveIMURequest.vx);
-            //     Serial.print(", ");
-            //     Serial.print(chalkWebServer.driveIMURequest.va);
-            //     Serial.print(", ");
-            //     Serial.print(chalkWebServer.driveIMURequest.p);
-            //     Serial.print(", ");
-            //     Serial.print(chalkWebServer.driveIMURequest.duration);
-            //     Serial.println("");
-            // }
+            auto writer = logger.writer_debug();
+            writer.print("DRIVE_IMU: ");
+            writer.print(request.vx);
+            writer.print(", ");
+            writer.print(request.va);
+            writer.print(", ");
+            writer.print(request.p);
+            writer.print(", ");
+            writer.print(request.duration);
+            writer.finish();
 
             bb::behavior.moving = true;
             break;
@@ -129,7 +127,7 @@ void Behavior::update() {
 
             float maxDistanceError = 30;
 
-            Serial.println(vx);
+            // Serial.println(vx);
             if(abs(vx) > maxDistanceError)
             {
                 // P-controller
@@ -152,15 +150,13 @@ void Behavior::update() {
                 stop = true;
             }
 
-            // FIXME: logger
-            // if(chalkWebServer.debug == 10) {
-            //     Serial.print(targetPointLocal.x);
-            //     Serial.print(",");
-            //     Serial.print(targetPointLocal.y);
-            //     //Serial.print(",");
-            //     //Serial.print(chalkWebServer.gotoPointRequest.p_pwm);
-            //     Serial.println("");
-            // }
+            auto writer = logger.writer_debug();
+            writer.print("GOTO: ");
+            writer.print(targetPointLocal.x);
+            writer.print(",");
+            writer.print(targetPointLocal.y);
+            writer.print(",");
+            writer.print(request.p_pwm);
 
             break;
         }

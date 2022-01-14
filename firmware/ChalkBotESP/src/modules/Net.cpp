@@ -85,7 +85,8 @@ bool Net::init(const char *ssid, const char *password)
 }
 
 bool Net::begin() {
-    return initAP(config::wifi::AP_SSID, config::wifi::AP_PASSPHRASE);
+    // return initAP(config::wifi::AP_SSID, config::wifi::AP_PASSPHRASE);
+    return init("NAONET", config::wifi::AP_PASSPHRASE);
 }
 
 void Net::update() {
