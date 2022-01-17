@@ -13,7 +13,7 @@ import socketserver
 import threading
 import traceback
 import json
-
+import numpy as np
 import Robot
 
 PORT = 8000
@@ -22,13 +22,14 @@ lastCommand = None
 timeOfLastCommand = datetime.timestamp(datetime.now())
 driveRequest = [0,0,0,0]
 status_motion = "stopped"
-
+goto_point = [0,0,0]
+distance = 0
+angle = 0
 def init():
     
     ThreadedTCPServer.allow_reuse_address = True
     server = ThreadedTCPServer(("", PORT), SimulationHandler)
     threading.Thread(target=server.serve_forever).start()
-
 def log(x):
     if (x > 0):
         return math.log(x)
@@ -43,14 +44,27 @@ def set_drive(parameters):
     global driveRequest, lastCommand, timeOfLastCommand
     list = parameters.split(";")
 
-    driveRequest[0] = log(float(list[0][2:]))
-    driveRequest[1] = log(float(list[1]))
+    driveRequest[0] = float(list[0][2:])
+    driveRequest[1] = float(list[1])
     
     driveRequest[2] = int(list[2])
     driveRequest[3] = int(list[3][:len(list[3])-1])
 
     lastCommand = "drive"
     timeOfLastCommand = datetime.timestamp(datetime.now()) * 1000
+
+def goto(parameters):
+    global goto_point, lastCommand, timeOfLastCommand, distance, angle
+    print(parameters)
+    list = parameters.split(";")
+    goto_point[0] = float(list[0][2:])/10
+    goto_point[1] = float(list[1])/10
+    goto_point[2] = float(list[2][:len(list[2])-1])
+    lastCommand = "goto"
+    timeOfLastCommand = datetime.timestamp(datetime.now()) * 1000
+    distance = math.sqrt(goto_point[0]*goto_point[0] + goto_point[1]*goto_point[1])
+
+    angle = np.arctan2(goto_point[1], goto_point[0])
 
 
 class SimulationHandler(SimpleHTTPRequestHandler):
@@ -71,6 +85,9 @@ class SimulationHandler(SimpleHTTPRequestHandler):
         elif self.path =="/drive":
             set_drive(str(data))
             response = driveRequest
+        elif self.path =="/goto_point":
+            goto(str(data))
+            response = goto_point
         else:
             response = "unknown command: " + self.path
         print(response)
