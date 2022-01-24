@@ -7,6 +7,7 @@
 //https://github.com/me-no-dev/ESPAsyncWebServer
 #include <ESPAsyncWebServer.h>
 
+#include "../Config.h"
 #include "../BB.h"
 #include "../util/math/Vector2.h"
 
@@ -26,7 +27,7 @@ class WebServer
 
 public:
 
-  WebServer() : server(80) {}
+  WebServer() : server(config::ports::WEB_SERVER) {}
 
   void begin() {
     registerRequests();

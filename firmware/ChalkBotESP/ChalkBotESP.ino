@@ -6,6 +6,8 @@
 #include "src/modules/Gnss.h"
 #include "src/modules/Odometry.h"
 #include "src/modules/Net.h"
+#include "src/modules/LogServer.h"
+#include "src/modules/EchoServer.h"
 #include "src/modules/WebServer.h"
 #include "src/modules/Behavior.h"
 #include "src/util/Logger.h"
@@ -28,10 +30,10 @@ static Imu imu_; // name conflicts with namespace imu from <Adafruit_BNO055.h>
 static Gnss gnss;
 static Odometry odometry;
 static Net net;
+static LogServer logServer;
+static EchoServer echoServer;
 static WebServer webServer;
 static Behavior behavior;
-
-static WiFiServer logServer(8001);
 
 
 // The setup routine runs once when you press reset.
@@ -42,28 +44,25 @@ void setup()
 
   Logger::attach_listener(Serial, {{ "all", Logger::INFO }});
 
-  Wire.begin(); // setup I2C master
+  Wire.begin((int)config::pins::i2cData, config::pins::i2cClock); // setup I2C master
   //Wire.setClock(400000); // set Clock to 400kHz
 
   net.begin();
+  logServer.begin();
+  echoServer.begin();
   webServer.begin();
 
   imu_.begin();
   gnss.begin();
-
-  logServer.begin();
 
   delay(1000); // FIXME
 }
 
 void loop()
 {
-  WiFiClient logClient = logServer.available();
-  if (logClient) {
-    Logger::attach_listener_managed(new auto(logClient), {{ "all", Logger::DEBUG }});
-  }
-
   net.update();
+  logServer.update();
+  echoServer.update();
   imu_.update();
   gnss.update();
   odometry.update();
