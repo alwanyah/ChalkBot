@@ -51,7 +51,7 @@ class Robot(object):
         else:
             self.xvel = 5 * math.cos(self.theta)
             self.yvel = 5 * math.sin(self.theta)
-            CommandServer.distance = CommandServer.distance - 50
+            CommandServer.distance = CommandServer.distance - 5
 
     def setVelocitySmooth(self, v, r):
         self.xvel = 0

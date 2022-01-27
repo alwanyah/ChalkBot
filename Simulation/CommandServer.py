@@ -62,9 +62,9 @@ def goto(parameters):
     goto_point[2] = float(list[2][:len(list[2])-1])
     lastCommand = "goto"
     timeOfLastCommand = datetime.timestamp(datetime.now()) * 1000
-    distance = math.sqrt(goto_point[0]*goto_point[0] + goto_point[1]*goto_point[1])
+    distance = (math.sqrt(goto_point[0]*goto_point[0] + goto_point[1]*goto_point[1]))/10
 
-    angle = np.arctan2(goto_point[1], goto_point[0])
+    angle = -np.arctan2(goto_point[1], goto_point[0])
 
 
 class SimulationHandler(SimpleHTTPRequestHandler):
