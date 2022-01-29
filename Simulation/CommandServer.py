@@ -55,22 +55,23 @@ def set_drive(parameters):
 
 def goto(parameters):
     global goto_point, lastCommand, timeOfLastCommand, distance, angle
-    print(parameters)
+    #print(parameters)
     list = parameters.split(";")
     goto_point[0] = float(list[0][2:])/10
     goto_point[1] = float(list[1])/10
     goto_point[2] = float(list[2][:len(list[2])-1])
     lastCommand = "goto"
     timeOfLastCommand = datetime.timestamp(datetime.now()) * 1000
-    distance = (math.sqrt(goto_point[0]*goto_point[0] + goto_point[1]*goto_point[1]))/10
-
+    distance = (math.sqrt(goto_point[0]*goto_point[0] + goto_point[1]*goto_point[1]))
+    #print("Distance:")
+    #print (distance)
     angle = -np.arctan2(goto_point[1], goto_point[0])
 
 
 class SimulationHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
-        print("executing do_POST")
+        #print("executing do_POST")
         # get the length of the data to read
         length = int(self.headers.get('content-length'))
         data = self.rfile.read(length)
@@ -90,7 +91,7 @@ class SimulationHandler(SimpleHTTPRequestHandler):
             response = goto_point
         else:
             response = "unknown command: " + self.path
-        print(response)
+        #print(response)
         # header
         self.send_response(200)
         self.send_header("Content-type", "text/html")

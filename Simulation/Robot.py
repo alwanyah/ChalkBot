@@ -13,8 +13,6 @@ import numpy as np
 #import traceback
 #import json
 
-distance = 0
-
 time_since_last_command = 0
 
 class Robot(object):
@@ -30,6 +28,7 @@ class Robot(object):
         self.lastUpdate = 0
         self.lastCommand = "None"
         self.lastCommandTime = 0
+        self.printing = False
         CommandServer.init()
     
 
@@ -37,21 +36,27 @@ class Robot(object):
     def drive(self, driveRequest):
         self.xvel = math.cos(self.theta) * driveRequest[0] * 5/255
         self.yvel = math.sin(self.theta) * driveRequest[0] * 5/255
-        self.rvel = driveRequest[1] /1024
+        self.rvel = driveRequest[1] / (255 * 64)
+        self.printing = driveRequest[2] > 0
+
 
     def goto(self):
         
         self.xvel = 0
         self.yvel = 0
         self.rvel = 0
+        self.printing = CommandServer.goto_point[2] > 0
+
 
         if abs(CommandServer.angle) > math.pi/100:
-            self.rvel = CommandServer.angle/abs(CommandServer.angle) /256
+            self.rvel = CommandServer.angle/abs(CommandServer.angle) / 64
             CommandServer.angle = CommandServer.angle - self.rvel
         else:
             self.xvel = 5 * math.cos(self.theta)
             self.yvel = 5 * math.sin(self.theta)
             CommandServer.distance = CommandServer.distance - 5
+            #print("DISTANCE:")
+            #print(CommandServer.distance)
 
     def setVelocitySmooth(self, v, r):
         self.xvel = 0
@@ -69,10 +74,10 @@ class Robot(object):
             CommandServer.status_motion = "moving"
 
         elif (CommandServer.lastCommand=="goto" and CommandServer.distance > 0):
-            
             self.goto()
             CommandServer.status_motion = "moving"
         else:
+            self.printing = False
             self.setVelocitySmooth(0,0)
             CommandServer.status_motion = "stopped"
 

@@ -11,6 +11,10 @@ robot = Robot.Robot()
 
 factor = 1
 
+dots = []
+
+radius = 10/factor
+
 class ChalkBot(object):
     def __init__(self):
         self.shape = pantograph.Image("tutrobot.png",100, 100, 60/factor, 40/factor)
@@ -18,9 +22,10 @@ class ChalkBot(object):
         self.xvel = 0
         self.yvel = 0
         self.rvel = 0
+        self.ink = 10
 
     def update(self, canvas): # ca 1 update alle 12 ms aber wir gehen von 10 ms aus, also 100 pro sekunde.
-
+    
         robot.update()
         self.xvel = robot.xvel/factor
         self.yvel = robot.yvel/factor
@@ -40,11 +45,19 @@ class ChalkBot(object):
 
         robot.theta = self.theta
         
-
-        
-
+        print(self.shape.x)
+        print(self.shape.y)
         self.shape.translate(self.xvel, self.yvel)
         self.shape.rotate(self.theta)
+
+        if robot.printing:
+            dots.append([self.shape.x, self.shape.y])
+
+        for dot in dots:
+            pantograph.Circle(dot[0], dot[1], radius, "#f00").draw(canvas)
+
+
+
         self.shape.draw(canvas)
 
 
@@ -59,6 +72,7 @@ class ChalkBotSimulation(pantograph.PantographHandler):
 
     def update(self):
         self.clear_rect(0, 0, self.width, self.height)
+
         self.chalkbot.update(self)
 
 def main():
