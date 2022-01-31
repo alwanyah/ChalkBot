@@ -18,5 +18,6 @@ arduino-cli config set library.enable_unsafe_install true
 arduino-cli core install esp32:esp32
 arduino-cli lib install 'Adafruit BNO055'
 arduino-cli lib install 'SparkFun u-blox GNSS Arduino Library'
+arduino-cli lib install 'ArduinoJson'
 arduino-cli lib install --git-url 'https://github.com/me-no-dev/AsyncTCP.git'
 arduino-cli lib install --git-url 'https://github.com/me-no-dev/ESPAsyncWebServer.git'
