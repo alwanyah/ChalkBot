@@ -7,7 +7,7 @@ class ImuBB {
     friend class Imu;
 
     bool connected = false;
-    double orientation = 0.0; // FIXME: unit. deg? rad?
+    double orientation = 0.0; // rad
 
 public:
     bool isConnected() const {

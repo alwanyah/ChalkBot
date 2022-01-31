@@ -46,10 +46,10 @@ void Logger::log(Verbosity message_verbosity, const std::string &message) const 
 
         size_t written = 0;
 
-        // [  74.3345] [error] [GNSS] Initialisation failed.
-        // [ 142.7421] [ info] [WebServer] Listening on port 80.
+        // [  74.334] [error] [GNSS] Initialisation failed.
+        // [ 142.742] [ info] [WebServer] Listening on port 80.
 
-        written += listener.print->printf("[%4lu.%04lu]", ms / 1000, ms % 1000);
+        written += listener.print->printf("[%4lu.%03lu]", ms / 1000, ms % 1000);
 
         switch (message_verbosity) {
             case ERROR:

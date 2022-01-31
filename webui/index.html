@@ -66,14 +66,14 @@
                     },
                 }
             }
-            
+
             self.ChalkBot = class ChalkBot {
                 address
 
                 constructor(address) {
                     this.address = address
                 }
-                
+
                 async pose() {
                     const response = await fetch(`//${this.address}/pose`)
                     return await response.json()

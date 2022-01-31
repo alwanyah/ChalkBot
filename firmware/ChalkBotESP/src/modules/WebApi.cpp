@@ -37,7 +37,7 @@ public:
     virtual bool isRequestHandlerTrivial() override {
         return false;
     }
-    
+
 private:
     String url;
     GetFunction getFunction;
@@ -108,7 +108,7 @@ public:
     virtual bool isRequestHandlerTrivial() override {
         return false;
     }
-    
+
 private:
     PatchFunction patchFunction;
     uint8_t *content = nullptr;
@@ -135,7 +135,7 @@ static void sendGenericResponse(AsyncWebServerRequest *request, int code, const 
 
     StaticJsonDocument<JSON_SIZE> doc;
     JsonObject root = doc.to<JsonObject>();
-    
+
     root["code"] = code;
     root["message"] = message;
     if (extra != nullptr) {

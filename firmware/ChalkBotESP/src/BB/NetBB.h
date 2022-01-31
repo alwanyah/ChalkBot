@@ -5,7 +5,7 @@
 
 class NetBB {
     friend class Net;
-    
+
     IPAddress localAddress;
 
 public:

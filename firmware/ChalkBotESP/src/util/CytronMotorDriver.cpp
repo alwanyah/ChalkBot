@@ -7,10 +7,10 @@ CytronMD::CytronMD(MODE mode, uint8_t pin1, uint8_t pin2)
   _mode = mode;
   _pin1 = pin1;
   _pin2 = pin2;
-  
+
   pinMode(_pin1, OUTPUT);
   pinMode(_pin2, OUTPUT);
-  
+
   digitalWrite(_pin1, LOW);
   digitalWrite(_pin2, LOW);
 
@@ -20,7 +20,7 @@ CytronMD::CytronMD(MODE mode, uint8_t pin1, uint8_t pin2)
 
   // configure LED PWM functionalitites
   ledcSetup(pwmChannel, freq, resolution);
-  
+
   // attach the channel to the GPIO to be controlled
   ledcAttachPin(_pin1, pwmChannel);
   _pin1 = pwmChannel;
@@ -35,7 +35,7 @@ void CytronMD::setSpeed(int16_t speed)
   } else if (speed < -255) {
     speed = -255;
   }
-  
+
   // Set the speed and direction.
   switch (_mode) {
     case PWM_DIR:
@@ -49,7 +49,7 @@ void CytronMD::setSpeed(int16_t speed)
         digitalWrite(_pin2, HIGH);
       }
       break;
-      
+
     case PWM_PWM:
       if (speed >= 0) {
         //analogWrite(_pin1, speed);

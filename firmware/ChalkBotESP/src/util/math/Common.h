@@ -11,7 +11,7 @@
 #include <algorithm>
 #include <vector>
 
-namespace Math 
+namespace Math
 {
 
   /** constant for a half circle*/
@@ -59,7 +59,7 @@ namespace Math
   template <class T>
   inline int sgn(const T& a) {
     return ( (a < 0) ? -1 : (a > 0) ? 1 : 0 );
-  }  
+  }
 
   /**
   * defines the square of a value
@@ -85,7 +85,7 @@ namespace Math
     return (x < 0) ? (int)(x-0.5) : (int)(x+0.5);
   }
 
-  /** 
+  /**
    * set the value to range [min,max]
    * @param[in] x the orginal value
    * @param[in] min the range left
@@ -97,21 +97,21 @@ namespace Math
     return (x > max) ? max : (x < min) ? min : x;
   }
 
-  /** 
+  /**
    * Converts angle from rad to degrees.
    * @param angle code in rad
    * @return angle coded in degrees
    */
   inline double toDegrees(double angle){return angle / pi_180;}
 
-  /** 
+  /**
    * Converts angle from degrees to rad.
    * @param degrees angle coded in degrees
    * @return angle coded in rad
    */
   inline double fromDegrees(double degrees){return degrees * pi_180;}
 
-  /** 
+  /**
   * reduce angle to [-pi..+pi[
   * @param data angle coded in rad
   * @return normalized angle coded in rad
@@ -141,7 +141,7 @@ namespace Math
   inline int random(int n) { assert(n > 0); return ((int)(random()*n))%n; }
 
 
-  /** 
+  /**
    * generate a random int value in [min, max]
    * @param[in] min the min value of the random number
    * @param[in] max the max value of the random number
@@ -152,8 +152,8 @@ namespace Math
   }
 
   // TODO: is not working properly for int
-  /** 
-   * generate a random value in (min,max) 
+  /**
+   * generate a random value in (min,max)
    * @param[in] min the min value of the random number
    * @param[in] max the max value of the random number
    * @return the random number
@@ -193,9 +193,9 @@ namespace Math
   /* TODO: This needs to be tested
   template<typename T>
   T vectorMeanAngle(const std::vector<T> values) {
-    // TODO: remove assert when the method was tested 
+    // TODO: remove assert when the method was tested
     assert(true);
-    
+
     double a = 0;
     double b = 0;
     for (size_t i = 0; i < values.size(); ++i)
@@ -256,7 +256,7 @@ namespace Math
   template<size_t PrecisionBits>
   std::int32_t toFixPoint(float val) {
     static const std::int32_t one = 1 << PrecisionBits;
-    
+
     return static_cast<int32_t>(val * static_cast<float>(one) + (val < 0 ? -0.5f : 0.5f));
   }
 

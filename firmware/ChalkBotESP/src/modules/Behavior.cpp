@@ -58,7 +58,7 @@ void Behavior::update() {
         case Action::DRIVE:
             drive(action.getDrive(), elapsed);
             break;
-        
+
         case Action::GOTO:
             goto_(action.getGoto(), elapsed);
             break;

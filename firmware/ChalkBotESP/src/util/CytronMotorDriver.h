@@ -15,7 +15,7 @@ class CytronMD
   public:
     CytronMD(MODE mode, uint8_t pin1, uint8_t pin2);
     void setSpeed(int16_t speed);
-    
+
   public:
     MODE _mode;
   	uint8_t _pin1;
