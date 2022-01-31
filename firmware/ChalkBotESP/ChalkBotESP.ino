@@ -9,6 +9,7 @@
 #include "src/modules/LogServer.h"
 #include "src/modules/EchoServer.h"
 #include "src/modules/WebServer.h"
+#include "src/modules/WebApi.h"
 #include "src/modules/Behavior.h"
 #include "src/util/Logger.h"
 
@@ -33,6 +34,7 @@ static Net net;
 static LogServer logServer;
 static EchoServer echoServer;
 static WebServer webServer;
+static WebApi webApi;
 static Behavior behavior;
 
 
@@ -51,6 +53,7 @@ void setup()
   logServer.begin();
   echoServer.begin();
   webServer.begin();
+  webApi.begin();
 
   imu_.begin();
   gnss.begin();

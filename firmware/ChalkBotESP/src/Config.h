@@ -34,6 +34,7 @@ namespace config {
         constexpr uint16_t WEB_SERVER = 80; // TCP
         constexpr uint16_t LOG_SERVER = 8001; // TCP
         constexpr uint16_t ECHO_SERVER = 8002; // UDP
+        constexpr uint16_t WEB_API = 8080; // TCP
     }
 
     namespace wifi {
@@ -70,6 +71,8 @@ namespace config {
 
     // multicast local scope (67.66 = "CB")
     constexpr uint8_t DISCOVERY_ADDRESS[4] = { 239, 255, 67, 66 };
+
+    constexpr size_t ACTION_QUEUE_CAPACITY = 5;
 }
 
 #endif
