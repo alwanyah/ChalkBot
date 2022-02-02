@@ -9,6 +9,7 @@
             <div>
                 <label for="address">Address</label>
                 <input id="address" type="text" value="192.168.0.231:8080">
+                <button id="addressSet">set</button>
             </div>
         </fieldset>
         <fieldset>
@@ -121,6 +122,7 @@
             self.UI = class UI {
                 #elements = {
                     address: document.getElementById('address'),
+                    addressSet: document.getElementById('addressSet'),
 
                     poseAutoUpdate: document.getElementById('poseAutoUpdate'),
                     poseOutput: document.getElementById('poseOutput'),
@@ -153,7 +155,7 @@
                 constructor(chalkBot) {
                     this.#canvasContext = this.#elements.canvas.getContext('2d')
                     this.chalkBot = new ChalkBot(this.#elements.address.value)
-                    this.#elements.address.addEventListener('input', () => this.#updateAddress())
+                    this.#elements.addressSet.addEventListener('click', () => this.#updateAddress())
                     this.#elements.driveGo.addEventListener('click', () => this.#drive())
                     this.#elements.gotoGo.addEventListener('click', () => this.#goto())
                     this.#elements.canvas.addEventListener('click', (event) => this.#gotoCanvas(event))
