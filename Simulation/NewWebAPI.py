@@ -52,7 +52,6 @@ chalk_bot = ChalkBot()
 
 @app.before_first_request
 def before_first_request():
-    chalk_bot.daemon = True
     chalk_bot.start()
 
 @app.route('/pose', methods=['GET'])
