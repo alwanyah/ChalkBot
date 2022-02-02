@@ -17,13 +17,12 @@ time_since_last_command = 0
 
 class Robot(object):
     def __init__(self):
-        self.x = 0
-        self.y = 0
+        self.x = 100
+        self.y = 100
         self.xvel = 0
         self.yvel = 0
         self.theta = 0
         self.rvel = 0
-        self.print = 0
         #self.t = datetime.now()
         self.lastUpdate = 0
         self.lastCommand = "None"
@@ -31,32 +30,6 @@ class Robot(object):
         self.printing = False
         CommandServer.init()
     
-
-    #driveRequest has following structure: [v_pwm, r_pwm, p_pwm, duration]
-    def drive(self, driveRequest):
-        self.xvel = math.cos(self.theta) * driveRequest[0] * 5/255
-        self.yvel = math.sin(self.theta) * driveRequest[0] * 5/255
-        self.rvel = driveRequest[1] / (255 * 64)
-        self.printing = driveRequest[2] > 0
-
-
-    def goto(self):
-        
-        self.xvel = 0
-        self.yvel = 0
-        self.rvel = 0
-        self.printing = CommandServer.goto_point[2] > 0
-
-
-        if abs(CommandServer.angle) > math.pi/100:
-            self.rvel = CommandServer.angle/abs(CommandServer.angle) / 64
-            CommandServer.angle = CommandServer.angle - self.rvel
-        else:
-            self.xvel = 5 * math.cos(self.theta)
-            self.yvel = 5 * math.sin(self.theta)
-            CommandServer.distance = CommandServer.distance - 5
-            #print("DISTANCE:")
-            #print(CommandServer.distance)
 
     def setVelocitySmooth(self, v, r):
         self.xvel = 0
@@ -70,16 +43,57 @@ class Robot(object):
         time_since_last_command = t - CommandServer.timeOfLastCommand
 
         if (CommandServer.lastCommand=="drive" and (time_since_last_command < CommandServer.driveRequest[3])):
-            self.drive(CommandServer.driveRequest)
+            
+            self.xvel = math.cos(self.theta) * CommandServer.driveRequest[0] * 50/255
+            self.yvel = math.sin(self.theta) * CommandServer.driveRequest[0] * 50/255
+            self.rvel = CommandServer.driveRequest[1] / (255 * 64)
+            self.printing = CommandServer.driveRequest[2] > 0
             CommandServer.status_motion = "moving"
 
-        elif (CommandServer.lastCommand=="goto" and CommandServer.distance > 0):
-            self.goto()
-            CommandServer.status_motion = "moving"
+        elif (CommandServer.lastCommand=="goto"):
+
+            yrel = (CommandServer.goto_point[0]-self.x)*math.cos(self.theta) + (CommandServer.goto_point[1]-self.y)*math.sin(self.theta)
+            xrel = -(CommandServer.goto_point[0]-self.x)*math.sin(self.theta) + (CommandServer.goto_point[1]-self.y)*math.cos(self.theta)
+
+            distance = math.sqrt(xrel*xrel + yrel*yrel)
+            angle = -np.arctan2(xrel, yrel)
+            self.printing = CommandServer.goto_point[2] > 0
+
+            maxDistanceError = 30 # mm
+            maxAngleError = 1/100 # Radians - this is the offset 
+
+            if distance > maxDistanceError:
+                if abs(angle) > maxAngleError:
+                    self.xvel = 0
+                    self.yvel = 0
+                    self.rvel = angle/abs(angle) / 64
+
+                else:
+                    self.xvel = math.cos(self.theta) * 50
+                    self.yvel = math.sin(self.theta) * 50
+                    self.rvel = 0
+                CommandServer.status_motion = "moving"
+            else:
+                self.printing = False
+                self.setVelocitySmooth(0,0)
+                CommandServer.status_motion = "stopped"
+
         else:
             self.printing = False
             self.setVelocitySmooth(0,0)
             CommandServer.status_motion = "stopped"
+
+        #behavior
+        self.x += self.xvel
+        self.y += self.yvel
+        
+        self.theta -= self.rvel
+        if self.theta > math.pi:
+            self.theta -= 2 * math.pi
+        
+
+
+
 
 """
 if __name__ == '__main__':

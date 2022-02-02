@@ -23,8 +23,7 @@ timeOfLastCommand = datetime.timestamp(datetime.now())
 driveRequest = [0,0,0,0]
 status_motion = "stopped"
 goto_point = [0,0,0]
-distance = 0
-angle = 0
+
 def init():
     
     ThreadedTCPServer.allow_reuse_address = True
@@ -54,18 +53,18 @@ def set_drive(parameters):
     timeOfLastCommand = datetime.timestamp(datetime.now()) * 1000
 
 def goto(parameters):
-    global goto_point, lastCommand, timeOfLastCommand, distance, angle
+    global goto_point, lastCommand, timeOfLastCommand
     #print(parameters)
     list = parameters.split(";")
-    goto_point[0] = float(list[0][2:])/10
-    goto_point[1] = float(list[1])/10
+    goto_point[0] = float(list[0][2:])
+    goto_point[1] = float(list[1])
     goto_point[2] = float(list[2][:len(list[2])-1])
     lastCommand = "goto"
     timeOfLastCommand = datetime.timestamp(datetime.now()) * 1000
-    distance = (math.sqrt(goto_point[0]*goto_point[0] + goto_point[1]*goto_point[1]))
+    #distance = (math.sqrt(goto_point[0]*goto_point[0] + goto_point[1]*goto_point[1]))
     #print("Distance:")
     #print (distance)
-    angle = -np.arctan2(goto_point[1], goto_point[0])
+    #angle = -np.arctan2(goto_point[1], goto_point[0])
 
 
 class SimulationHandler(SimpleHTTPRequestHandler):
