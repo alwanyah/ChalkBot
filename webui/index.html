@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ChalkBot Web UI</title>
+    </head>
+    <body>
+        <fieldset>
+            <legend>Config</legend>
+            <div>
+                <label for="address">Address</label>
+                <input id="address" type="text" value="192.168.0.231:8080">
+                <button id="addressSet">set</button>
+            </div>
+        </fieldset>
+        <fieldset>
+            <legend>Pose</legend>
+            <label for="poseAutoUpdate">Auto Update</label>
+            <input id="poseAutoUpdate" type="checkbox" checked>
+            <span id="poseOutput">???</span>
+        </fieldset>
+        <fieldset>
+            <legend>Drive</legend>
+            <label for="driveForward">Forward (%)</label>
+            <input id="driveForward" type="number" value="25">
+            <label for="driveClockwise">Clockwise (%)</label>
+            <input id="driveClockwise" type="number" value="0">
+            <label for="drivePrint">Print (%)</label>
+            <input id="drivePrint" type="number" value="0">
+            <label for="driveDuration">Duration (s)</label>
+            <input id="driveDuration" type="number" value="1">
+            <button id="driveGo">Go</button>
+        </fieldset>
+        <fieldset>
+            <legend>Goto</legend>
+            <label for="gotoNorth">North (m)</label>
+            <input id="gotoNorth" type="number" value="0">
+            <label for="gotoEast">East (m)</label>
+            <input id="gotoEast" type="number" value="0">
+            <label for="gotoPrint">Print (%)</label>
+            <input id="gotoPrint" type="number" value="0">
+            <button id="gotoGo">Go</button>
+        </fieldset>
+        <fieldset>
+            <legend>Canvas</legend>
+            <canvas id="canvas" width="500" height="500" style="border: solid"></canvas>
+        </fieldset>
+        <fieldset>
+            <legend>Key Control</legend>
+            <input id="keyControl" type="text">
+        </fieldset>
+        <script type="module">
+            function DriveAction(forward, clockwise, print, duration) {
+                return {
+                    type: "drive",
+                    properties: {
+                        forward,
+                        clockwise,
+                        print,
+                        duration,
+                    },
+                }
+            }
+
+            function GotoAction(north, east, print) {
+                return {
+                    type: "goto",
+                    properties: {
+                        north,
+                        east,
+                        print,
+                    },
+                }
+            }
+
+            self.ChalkBot = class ChalkBot {
+                address
+
+                constructor(address) {
+                    this.address = address
+                }
+
+                async pose() {
+                    const response = await fetch(`//${this.address}/pose`)
+                    return await response.json()
+                }
+
+                async actions() {
+                    const response = await fetch(`//${this.address}/action_queue`)
+                    return await response.json()
+                }
+
+                async replaceActions(actions) {
+                    await fetch(`//${this.address}/action_queue`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            method: 'replace',
+                            queue: actions,
+                        }),
+                    })
+                }
+
+                async appendActions(actions) {
+                    const response = await fetch(`//${this.address}/action_queue`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            method: 'append',
+                            queue: actions,
+                        }),
+                    })
+                    return (await response.json()).appended
+                }
+            }
+
+            self.UI = class UI {
+                #elements = {
+                    address: document.getElementById('address'),
+                    addressSet: document.getElementById('addressSet'),
+
+                    poseAutoUpdate: document.getElementById('poseAutoUpdate'),
+                    poseOutput: document.getElementById('poseOutput'),
+
+                    driveForward: document.getElementById('driveForward'),
+                    driveClockwise: document.getElementById('driveClockwise'),
+                    drivePrint: document.getElementById('drivePrint'),
+                    driveDuration: document.getElementById('driveDuration'),
+                    driveGo: document.getElementById('driveGo'),
+
+                    gotoNorth: document.getElementById('gotoNorth'),
+                    gotoEast: document.getElementById('gotoEast'),
+                    gotoPrint: document.getElementById('gotoPrint'),
+                    gotoGo: document.getElementById('gotoGo'),
+
+                    canvas: document.getElementById('canvas'),
+
+                    keyControl: document.getElementById('keyControl'),
+                }
+
+                #canvasContext
+                #keys = {
+                    up: false,
+                    down: false,
+                    left: false,
+                    right: false,
+                }
+                chalkBot
+
+                constructor(chalkBot) {
+                    this.#canvasContext = this.#elements.canvas.getContext('2d')
+                    this.chalkBot = new ChalkBot(this.#elements.address.value)
+                    this.#elements.addressSet.addEventListener('click', () => this.#updateAddress())
+                    this.#elements.driveGo.addEventListener('click', () => this.#drive())
+                    this.#elements.gotoGo.addEventListener('click', () => this.#goto())
+                    this.#elements.canvas.addEventListener('click', (event) => this.#gotoCanvas(event))
+                    this.#elements.keyControl.addEventListener('keydown', (event) => this.#keyDown(event))
+                    this.#elements.keyControl.addEventListener('keyup', (event) => this.#keyUp(event))
+                    setInterval(() => this.#loop(), 500)
+                }
+
+                async #loop() {
+                    if (this.#elements.poseAutoUpdate.checked) {
+                        const pose = await this.chalkBot.pose()
+                        this.#elements.poseOutput.innerText = `north: ${pose.north.toFixed(3)}m, east: ${pose.east.toFixed(3)}m, heading: ${(pose.heading * 180 / Math.PI).toFixed(2)}°`
+
+                        const actionQueue = (await this.chalkBot.actions()).queue
+
+                        this.#canvasContext.clearRect(
+                            0,
+                            0,
+                            this.#elements.canvas.width,
+                            this.#elements.canvas.height,
+                        )
+
+                        this.#canvasContext.beginPath()
+                        this.#canvasContext.arc(
+                            250 + pose.east * 10,
+                            250 - pose.north * 10,
+                            10,
+                            pose.heading - Math.PI / 4,
+                            pose.heading + Math.PI * 5 / 4,
+                        )
+                        this.#canvasContext.moveTo(
+                            250 + pose.east * 10,
+                            250 - pose.north * 10,
+                        )
+                        this.#canvasContext.lineTo(
+                            250 + pose.east * 10 + 15 * Math.sin(pose.heading),
+                            250 - pose.north * 10 - 15 * Math.cos(pose.heading),
+                        )
+                        if (actionQueue.length !== 0 && actionQueue[0].type === 'goto') {
+                            const { north, east } = actionQueue[0].properties
+
+                            this.#canvasContext.moveTo(
+                                250 + east * 10 - 10,
+                                250 - north * 10 - 10,
+                            )
+                            this.#canvasContext.lineTo(
+                                250 + east * 10 + 10,
+                                250 - north * 10 + 10,
+                            )
+
+                            this.#canvasContext.moveTo(
+                                250 + east * 10 - 10,
+                                250 - north * 10 + 10,
+                            )
+                            this.#canvasContext.lineTo(
+                                250 + east * 10 + 10,
+                                250 - north * 10 - 10,
+                            )
+                        }
+                        this.#canvasContext.stroke()
+                    }
+
+                    if (this.#keys.needUpdate) {
+                        await this.#keyDrive()
+                    }
+                }
+
+                #updateAddress() {
+                    this.chalkBot.address = this.#elements.address.value
+                }
+
+                async #drive() {
+                    const action = new DriveAction(
+                        +this.#elements.driveForward.value / 100,
+                        +this.#elements.driveClockwise.value / 100,
+                        +this.#elements.drivePrint.value / 100,
+                        +this.#elements.driveDuration.value,
+                    )
+                    await this.chalkBot.replaceActions([action])
+                }
+
+                async #goto() {
+                    const north = +this.#elements.gotoNorth.value
+                    const east = +this.#elements.gotoEast.value
+                    const print = +this.#elements.gotoPrint.value / 100
+
+                    const action = new GotoAction(north, east, print)
+                    await this.chalkBot.replaceActions([action])
+                }
+
+                async #gotoCanvas(event) {
+                    const north = (250 - event.offsetY) / 10
+                    const east = (event.offsetX - 250) / 10
+
+                    const action = new GotoAction(north, east, 0)
+                    await this.chalkBot.replaceActions([action])
+                }
+
+                async #keyDrive() {
+                    const action = new DriveAction(
+                        (+this.#keys.up - +this.#keys.down) * 0.25,
+                        (+this.#keys.right - +this.#keys.left) * 0.25,
+                        0,
+                        1,
+                    )
+
+                    this.#keys.needUpdate =
+                        this.#keys.up
+                        || this.#keys.down
+                        || this.#keys.left
+                        || this.#keys.right
+
+                    await this.chalkBot.replaceActions([action])
+                }
+
+                async #keyDown(event) {
+                    switch (event.key) {
+                        case 'ArrowUp':
+                            this.#keys.up = true
+                            break
+
+                        case 'ArrowDown':
+                            this.#keys.down = true
+                            break
+
+                        case 'ArrowLeft':
+                            this.#keys.left = true
+                            break
+
+                        case 'ArrowRight':
+                            this.#keys.right = true
+                            break
+                    }
+
+                    event.preventDefault()
+                    if (!event.repeat) {
+                        await this.#keyDrive()
+                    }
+                }
+
+                async #keyUp(event) {
+                    switch (event.key) {
+                        case 'ArrowUp':
+                            this.#keys.up = false
+                            break
+
+                        case 'ArrowDown':
+                            this.#keys.down = false
+                            break
+
+                        case 'ArrowLeft':
+                            this.#keys.left = false
+                            break
+
+                        case 'ArrowRight':
+                            this.#keys.right = false
+                            break
+                    }
+
+                    await this.#keyDrive()
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', () => self.ui = new UI)
+        </script>
+    </body>
+</html>

@@ -46,7 +46,7 @@ public:
   * \param rotation rotation (double)
   */
   Pose2T(const T rotation):rotation(rotation),translation(0,0) {}
-  
+
   /** constructor from translation
   * \param translation translation (Vector2)
   */
@@ -87,8 +87,7 @@ public:
   */
   // deprecated
   //inline double getSin() const {return sin(rotation);}
-  
-  /** 
+  /**
   * Multiplication of a Vector2 with this Pose2D
   * In fact we transform the point from the global coordinates to the local coordinates
   * represented by this pose (A*x = y), it holds
@@ -98,14 +97,14 @@ public:
   * \return The resulting Vector2
   */
   Vector2<T> operator*(const Vector2<T>& point) const
-  {  
+  {
     double s=sin(rotation);
     double c=cos(rotation);
     return Vector2<T>(point.x*c-point.y*s , point.x*s+point.y*c) + translation;
     //return Vector2<T>(point).rotate(rotation) + translation;
   }
 
-  /** 
+  /**
   * Division of a Vector2 with this Pose2D
   * In fact we transform the point from the local coordinates represented by this pose
   * to the global coordinates to, i.e. we solve the equation A*x = y (see * Operator).
@@ -268,7 +267,7 @@ public:
   }
 
 
-  /** 
+  /**
   * Calculates the inverse transformation from the current pose
   * @return The inverse transformation pose.
   */
@@ -293,7 +292,7 @@ public:
   static Pose2D random(const Range<double>& x,
                        const Range<double>& y,
                        const Range<double>& angle)
-  { // angle should even work in wrap around case!  
+  { // angle should even work in wrap around case!
     return Pose2D(::randomDouble() * (angle.max - angle.min) + angle.min,
                   Vector2<double>(::randomDouble() * (x.max - x.min) + x.min,
                                   ::randomDouble() * (y.max - y.min) + y.min));

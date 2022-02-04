@@ -11,7 +11,7 @@
 #include <ostream>
 
 /** This class represents a 2-vector */
-template <class V> class Vector2 
+template <class V> class Vector2
 {
   public:
   /** The vector values */
@@ -28,8 +28,8 @@ template <class V> class Vector2
 
   // conversion copy constructor, used to cast the type
   template<class W>
-  Vector2<V>(const Vector2<W>& other) : 
-    x(static_cast<V>(other.x)), 
+  Vector2<V>(const Vector2<W>& other) :
+    x(static_cast<V>(other.x)),
     y(static_cast<V>(other.y))
   {}
 
@@ -43,7 +43,7 @@ template <class V> class Vector2
   */
   Vector2<V>& operator+=(const Vector2<V>& other)
   {
-    x += other.x; 
+    x += other.x;
     y += other.y;
     return *this;
   }
@@ -192,8 +192,8 @@ template <class V> class Vector2
   }
 
   /** calculation of the length^2 */
-  V abs2() const { 
-    return x*x+y*y; 
+  V abs2() const {
+    return x*x+y*y;
   }
 
   /** normalize this vector.
@@ -222,7 +222,7 @@ template <class V> class Vector2
   *\return the transposed vector.
   */
   Vector2<V>& transpose()
-  { 
+  {
     V buffer = x;
     x = y;
     y = buffer;
@@ -234,7 +234,7 @@ template <class V> class Vector2
   *\return the rotated vector.
   */
   Vector2<V>& rotateLeft()
-  { 
+  {
     V buffer = -y;
     y = x;
     x = buffer;
@@ -246,7 +246,7 @@ template <class V> class Vector2
   *\return the rotated vector.
   */
   Vector2<V>& rotateRight()
-  { 
+  {
     V buffer = -x;
     x = y;
     y = buffer;
@@ -257,7 +257,7 @@ template <class V> class Vector2
    * (changes the object)
    */
   Vector2<V>& rotate(double angle)
-  { 
+  {
     double s=sin(angle);
     double c=cos(angle);
     V bufferX = x;
@@ -267,8 +267,8 @@ template <class V> class Vector2
     return *this;
   }
 
-  /** 
-   * Calculation of the angle of this vector 
+  /**
+   * Calculation of the angle of this vector
    * The result is allways double.
    */
   double angle() const {
@@ -296,7 +296,7 @@ template <class V> class Vector2
   V& operator[](int i) {
     return  (&x)[i];
   }
- 
+
   V operator[](int i) const {
       return (&x)[i];
   }

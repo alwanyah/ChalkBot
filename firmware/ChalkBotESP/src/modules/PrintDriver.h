@@ -1,16 +1,14 @@
-// https://github.com/CytronTechnologies/CytronMotorDriver
-
 #ifndef PRINT_DRIVER_H
-#define PRIN_DRIVER_H
+#define PRINT_DRIVER_H
 
 #include <Arduino.h>
-#include <stdint.h>
+#include "../BB.h"
 
-class PrintMD
+class PrintDriver
 {
   public:
-    PrintMD(uint8_t pinPwm, uint8_t pinDir1, uint8_t pinDir2) 
-      : 
+    PrintDriver(uint8_t pinPwm, uint8_t pinDir1, uint8_t pinDir2)
+      :
       //pinPwm(pinPwm),
       pinDir1(pinDir1),
       pinDir2(pinDir2)
@@ -18,7 +16,7 @@ class PrintMD
         pinMode(pinPwm, OUTPUT);
         pinMode(pinDir1, OUTPUT);
         pinMode(pinDir2, OUTPUT);
-        
+
         digitalWrite(pinPwm, LOW);
         digitalWrite(pinDir1, LOW);
         digitalWrite(pinDir2, LOW);
@@ -30,14 +28,16 @@ class PrintMD
 
         // configure LED PWM functionalitites
         ledcSetup(pwmChannel, freq, resolution);
-        
+
         // attach the channel to the GPIO to be controlled
         ledcAttachPin(pinPwm, pwmChannel);
         pinPwm = pwmChannel;
     }
-    
-    void setSpeed(int16_t speed) 
-    {
+
+  public:
+    void update() {
+      int16_t speed = bb::printDriver.speed;
+
       // Make sure the speed is within the limit.
       if (speed > 255) {
         speed = 255;
@@ -59,14 +59,13 @@ class PrintMD
         ledcWrite(pinPwm, -speed);
       }
     }
-    
-  protected:
+
+  private:
     uint8_t pinPwm;
 
     // NOTE: directional pins
     uint8_t pinDir1;
     uint8_t pinDir2;
 };
-
 
 #endif
