@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <meta charset="UTF-8">
         <title>ChalkBot Web UI</title>
     </head>
     <body>
@@ -45,8 +46,9 @@
             <canvas id="canvas" width="500" height="500" style="border: solid"></canvas>
         </fieldset>
         <fieldset>
-            <legend>Key Control</legend>
-            <input id="keyControl" type="text">
+            <legend>Control</legend>
+            <input id="keyControl" type="text" placeholder="key control">
+            <span id="gamepadOutput">Gamepad off</span>
         </fieldset>
         <script type="module">
             function DriveAction(forward, clockwise, print, duration) {
@@ -141,6 +143,7 @@
                     canvas: document.getElementById('canvas'),
 
                     keyControl: document.getElementById('keyControl'),
+                    gamepadOutput: document.getElementById('gamepadOutput'),
                 }
 
                 #canvasContext
@@ -150,6 +153,10 @@
                     left: false,
                     right: false,
                 }
+                #keysNeedUpdate
+                #gamepad
+                #gamepadTimestamp = 0
+                #gamepadNeedUpdate
                 chalkBot
 
                 constructor(chalkBot) {
@@ -161,65 +168,93 @@
                     this.#elements.canvas.addEventListener('click', (event) => this.#gotoCanvas(event))
                     this.#elements.keyControl.addEventListener('keydown', (event) => this.#keyDown(event))
                     this.#elements.keyControl.addEventListener('keyup', (event) => this.#keyUp(event))
-                    setInterval(() => this.#loop(), 500)
+
+                    this.#loop()
+                    this.#gamepadLoop()
                 }
 
                 async #loop() {
-                    if (this.#elements.poseAutoUpdate.checked) {
-                        const pose = await this.chalkBot.pose()
-                        this.#elements.poseOutput.innerText = `north: ${pose.north.toFixed(3)}m, east: ${pose.east.toFixed(3)}m, heading: ${(pose.heading * 180 / Math.PI).toFixed(2)}°`
+                    try {
+                        if (this.#elements.poseAutoUpdate.checked) {
+                            const pose = await this.chalkBot.pose()
+                            this.#elements.poseOutput.innerText = `north: ${pose.north.toFixed(3)}m, east: ${pose.east.toFixed(3)}m, heading: ${(pose.heading * 180 / Math.PI).toFixed(2)}°`
 
-                        const actionQueue = (await this.chalkBot.actions()).queue
+                            const actionQueue = (await this.chalkBot.actions()).queue
 
-                        this.#canvasContext.clearRect(
-                            0,
-                            0,
-                            this.#elements.canvas.width,
-                            this.#elements.canvas.height,
-                        )
+                            this.#canvasContext.clearRect(
+                                0,
+                                0,
+                                this.#elements.canvas.width,
+                                this.#elements.canvas.height,
+                            )
 
-                        this.#canvasContext.beginPath()
-                        this.#canvasContext.arc(
-                            250 + pose.east * 10,
-                            250 - pose.north * 10,
-                            10,
-                            pose.heading - Math.PI / 4,
-                            pose.heading + Math.PI * 5 / 4,
-                        )
-                        this.#canvasContext.moveTo(
-                            250 + pose.east * 10,
-                            250 - pose.north * 10,
-                        )
-                        this.#canvasContext.lineTo(
-                            250 + pose.east * 10 + 15 * Math.sin(pose.heading),
-                            250 - pose.north * 10 - 15 * Math.cos(pose.heading),
-                        )
-                        if (actionQueue.length !== 0 && actionQueue[0].type === 'goto') {
-                            const { north, east } = actionQueue[0].properties
-
+                            this.#canvasContext.beginPath()
+                            this.#canvasContext.arc(
+                                250 + pose.east * 10,
+                                250 - pose.north * 10,
+                                10,
+                                pose.heading - Math.PI / 4,
+                                pose.heading + Math.PI * 5 / 4,
+                            )
                             this.#canvasContext.moveTo(
-                                250 + east * 10 - 10,
-                                250 - north * 10 - 10,
+                                250 + pose.east * 10,
+                                250 - pose.north * 10,
                             )
                             this.#canvasContext.lineTo(
-                                250 + east * 10 + 10,
-                                250 - north * 10 + 10,
+                                250 + pose.east * 10 + 15 * Math.sin(pose.heading),
+                                250 - pose.north * 10 - 15 * Math.cos(pose.heading),
                             )
+                            if (actionQueue.length !== 0 && actionQueue[0].type === 'goto') {
+                                const { north, east } = actionQueue[0].properties
 
-                            this.#canvasContext.moveTo(
-                                250 + east * 10 - 10,
-                                250 - north * 10 + 10,
-                            )
-                            this.#canvasContext.lineTo(
-                                250 + east * 10 + 10,
-                                250 - north * 10 - 10,
-                            )
+                                this.#canvasContext.moveTo(
+                                    250 + east * 10 - 10,
+                                    250 - north * 10 - 10,
+                                )
+                                this.#canvasContext.lineTo(
+                                    250 + east * 10 + 10,
+                                    250 - north * 10 + 10,
+                                )
+
+                                this.#canvasContext.moveTo(
+                                    250 + east * 10 - 10,
+                                    250 - north * 10 + 10,
+                                )
+                                this.#canvasContext.lineTo(
+                                    250 + east * 10 + 10,
+                                    250 - north * 10 - 10,
+                                )
+                            }
+                            this.#canvasContext.stroke()
                         }
-                        this.#canvasContext.stroke()
-                    }
 
-                    if (this.#keys.needUpdate) {
-                        await this.#keyDrive()
+                        if (this.#keysNeedUpdate) {
+                            await this.#keyDrive()
+                        }
+
+                        if (this.#gamepadNeedUpdate) {
+                            await this.#gamepadDrive()
+                        }
+
+                    } finally {
+                        setTimeout(() => this.#loop(), 500)
+                    }
+                }
+
+                async #gamepadLoop() {
+                    try {
+                        const gamepads = navigator.getGamepads()
+                        if (gamepads.length === 0) {
+                            return
+                        }
+
+                        this.#gamepad = gamepads[0]
+
+                        if (this.#gamepadTimestamp !== this.#gamepad.timestamp) {
+                            await this.#gamepadDrive()
+                        }
+                    } finally {
+                        setTimeout(() => this.#gamepadLoop(), 100)
                     }
                 }
 
@@ -262,12 +297,37 @@
                         1,
                     )
 
-                    this.#keys.needUpdate =
+                    this.#keysNeedUpdate =
                         this.#keys.up
                         || this.#keys.down
                         || this.#keys.left
                         || this.#keys.right
 
+                    await this.chalkBot.replaceActions([action])
+                }
+
+                async #gamepadDrive() {
+                    this.#gamepadTimestamp = this.#gamepad.timestamp
+
+                    const forward = (-this.#gamepad.axes[1]) ** 3
+                    const clockwise = this.#gamepad.axes[0] / 2
+                    var print = this.#gamepad.axes[2]
+                    if (print < 0) {
+                        print = 0
+                    }
+
+                    this.#gamepadNeedUpdate =
+                        forward !== 0
+                        || clockwise !== 0
+                        || print !== 0
+
+                    if (this.#gamepadNeedUpdate) {
+                        this.#elements.gamepadOutput.innerText = `Gamepad forward: ${forward}, clockwise: ${clockwise}, print: ${print}`
+                    } else {
+                        this.#elements.gamepadOutput.innerText = 'Gamepad off'
+                    }
+
+                    const action = new DriveAction(forward, clockwise, print, 1.0)
                     await this.chalkBot.replaceActions([action])
                 }
 
