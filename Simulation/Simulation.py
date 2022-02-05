@@ -7,6 +7,7 @@ from datetime import datetime
 import CommandServer
 import Robot
 import gc
+import signal
 
 robot = Robot.Robot()
 
@@ -15,6 +16,13 @@ factor = 1
 dots = []
 
 radius = 10/factor
+
+def signal_handler(sig, frame):
+    CommandServer.close()
+    print("\nClosing Server!")
+    sys.exit()
+
+signal.signal(signal.SIGINT, signal_handler)
 
 class ChalkBot(object):
     def __init__(self):

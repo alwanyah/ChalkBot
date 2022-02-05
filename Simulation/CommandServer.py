@@ -23,9 +23,10 @@ timeOfLastCommand = datetime.timestamp(datetime.now())
 driveRequest = [0,0,0,0]
 status_motion = "stopped"
 goto_point = [0,0,0]
+server = None 
 
 def init():
-    
+    global server
     ThreadedTCPServer.allow_reuse_address = True
     server = ThreadedTCPServer(("", PORT), SimulationHandler)
     threading.Thread(target=server.serve_forever).start()
@@ -66,6 +67,9 @@ def goto(parameters):
     #print (distance)
     #angle = -np.arctan2(goto_point[1], goto_point[0])
 
+def close():
+    server.shutdown()
+    server.server_close()
 
 class SimulationHandler(SimpleHTTPRequestHandler):
 
