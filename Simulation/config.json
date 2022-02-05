@@ -1,5 +1,5 @@
 {
-    "timer_interval": 1,
+    "timer_interval": 10,
     "width": "fullWidth",
     "height": "fullHeight"
 }

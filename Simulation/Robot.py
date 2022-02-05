@@ -52,17 +52,18 @@ class Robot(object):
 
         elif (CommandServer.lastCommand=="goto"):
 
-            yrel = (CommandServer.goto_point[0]-self.x)*math.cos(self.theta) + (CommandServer.goto_point[1]-self.y)*math.sin(self.theta)
-            xrel = -(CommandServer.goto_point[0]-self.x)*math.sin(self.theta) + (CommandServer.goto_point[1]-self.y)*math.cos(self.theta)
+            xrel = (CommandServer.goto_point[0]-self.x)*math.cos(self.theta) + (CommandServer.goto_point[1]-self.y)*math.sin(self.theta)
+            yrel = -(CommandServer.goto_point[0]-self.x)*math.sin(self.theta) + (CommandServer.goto_point[1]-self.y)*math.cos(self.theta)
 
             distance = math.sqrt(xrel*xrel + yrel*yrel)
-            angle = -np.arctan2(xrel, yrel)
+            angle = -np.arctan2(yrel, xrel)
             self.printing = CommandServer.goto_point[2] > 0
 
             maxDistanceError = 30 # mm
-            maxAngleError = 1/100 # Radians - this is the offset 
+            maxAngleError = 1/100 # Radians - maximum Error
 
             if distance > maxDistanceError:
+
                 if abs(angle) > maxAngleError:
                     self.xvel = 0
                     self.yvel = 0
@@ -90,8 +91,9 @@ class Robot(object):
         self.theta -= self.rvel
         if self.theta > math.pi:
             self.theta -= 2 * math.pi
-        
 
+        CommandServer.pose = [self.x, self.y]
+        CommandServer.orientation = self.theta
 
 
 

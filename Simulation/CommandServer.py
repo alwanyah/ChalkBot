@@ -24,6 +24,9 @@ driveRequest = [0,0,0,0]
 status_motion = "stopped"
 goto_point = [0,0,0]
 
+pose = [0,0]
+orientation = 0
+
 def init():
     
     ThreadedTCPServer.allow_reuse_address = True
@@ -61,10 +64,7 @@ def goto(parameters):
     goto_point[2] = float(list[2][:len(list[2])-1])
     lastCommand = "goto"
     timeOfLastCommand = datetime.timestamp(datetime.now()) * 1000
-    #distance = (math.sqrt(goto_point[0]*goto_point[0] + goto_point[1]*goto_point[1]))
-    #print("Distance:")
-    #print (distance)
-    #angle = -np.arctan2(goto_point[1], goto_point[0])
+    
 
 
 class SimulationHandler(SimpleHTTPRequestHandler):
@@ -79,9 +79,9 @@ class SimulationHandler(SimpleHTTPRequestHandler):
         elif self.path == "/status_imu":
             response = "N/A"
         elif self.path == "/orientation":
-            response = "1.73"
+            response = str(orientation)
         elif self.path == "/pose":
-            response = "1000;300;1.73"
+            response = str(pose[0])+";"+str(pose[1])+";"+str(orientation)
         elif self.path =="/drive":
             set_drive(str(data))
             response = driveRequest
