@@ -7,7 +7,7 @@ import threading
 import traceback
 import json
 
-PORT = 8000
+PORT = 8800
 
 # debug stuff: print all methods of an object
 def print_methods(o):
