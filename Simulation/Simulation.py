@@ -66,6 +66,7 @@ class ChalkBotSimulation(pantograph.PantographHandler):
         self.chalkbot.update(self)
 
 def main():
+    print("Ctrl+C to close Server")
     app = pantograph.SimplePantographApplication(ChalkBotSimulation)
     app.run()
 
