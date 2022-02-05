@@ -7,6 +7,7 @@ from datetime import datetime
 import CommandServer
 import Robot
 import gc
+import signal
 
 robot = Robot.Robot()
 
@@ -24,6 +25,12 @@ radius = 10/factor
 # thus we transform the robot coordinates to the simulation coordinates by dividing with 10
 # as well as dividing by our adjustable 'factor' parameter,
 # which is to determine the scale of the simulation.
+def signal_handler(sig, frame):
+    CommandServer.close()
+    print("\nClosing Server!")
+    sys.exit()
+
+signal.signal(signal.SIGINT, signal_handler)
 
 class ChalkBot(object):
     def __init__(self):
@@ -72,6 +79,7 @@ class ChalkBotSimulation(pantograph.PantographHandler):
         self.chalkbot.update(self)
 
 def main():
+    print("Ctrl+C to close Server")
     app = pantograph.SimplePantographApplication(ChalkBotSimulation)
     app.run()
 
