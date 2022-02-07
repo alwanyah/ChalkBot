@@ -28,8 +28,8 @@ class Robot(object):
         self.lastCommand = "None"
         self.lastCommandTime = 0
         self.printing = False
-        CommandServer.init()
-    
+
+
 
     def setVelocitySmooth(self, v, r):
         self.xvel = 0
@@ -43,7 +43,7 @@ class Robot(object):
         time_since_last_command = t - CommandServer.timeOfLastCommand
 
         if (CommandServer.lastCommand=="drive" and (time_since_last_command < CommandServer.driveRequest[3])):
-            
+
             self.xvel = math.cos(self.theta) * CommandServer.driveRequest[0] * 50/255
             self.yvel = math.sin(self.theta) * CommandServer.driveRequest[0] * 50/255
             self.rvel = CommandServer.driveRequest[1] / (255 * 64)
@@ -87,7 +87,7 @@ class Robot(object):
         #behavior
         self.x += self.xvel
         self.y += self.yvel
-        
+
         self.theta -= self.rvel
         if self.theta > math.pi:
             self.theta -= 2 * math.pi
@@ -111,5 +111,5 @@ if __name__ == '__main__':
 """
 
 
-    
+
 

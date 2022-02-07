@@ -8,6 +8,7 @@ import CommandServer
 import Robot
 import gc
 import signal
+from collections import namedtuple
 
 robot = Robot.Robot()
 
@@ -38,7 +39,7 @@ class ChalkBot(object):
     def update(self, canvas): # ca 1 update alle 12 ms aber wir gehen von 10 ms aus, also 100 pro sekunde.
 
         robot.update()
-       
+
         self.shape.x = robot.x/(10*factor)
         self.shape.y = robot.y/(10*factor)
 
@@ -61,19 +62,26 @@ class ChalkBotSimulation(pantograph.PantographHandler):
         for dot in dots:
             pantograph.Circle(dot[0], dot[1], radius, "#f00").draw(self)
         gc.enable()
-        
+
         self.chalkbot.update(self)
+
+    def on_key_down(self, event):
+        global dots, robot
+        if event.key_code == 27:
+            dots = []
+            robot = Robot.Robot()
 
 def main():
     print("Ctrl+C to close Server")
+    print("Press ESC to reset the canvas.")
+    CommandServer.init()
     app = pantograph.SimplePantographApplication(ChalkBotSimulation)
     app.run()
 
 
 if __name__ == '__main__':
-
     factor = float(input("Size of Simulation canvas: "))
     main()
 
 
-    
+
