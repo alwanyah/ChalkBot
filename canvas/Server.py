@@ -88,9 +88,11 @@ class ChalkbotHandler(SimpleHTTPRequestHandler):
           print(msg)
 
           # do something with the data
-          file = open("coords.json","w")
-          file.write(json.dumps(msg))
-          file.close()
+          if (msg['file'] == True):
+            del msg['file']
+            file = open("coords.json","w")
+            file.write(json.dumps(msg))
+            file.close()
 
           result = "DONE!"
 
