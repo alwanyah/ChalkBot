@@ -19,7 +19,9 @@ import Robot
 PORT = 8000
 
 lastCommand = None
-timeOfLastCommand = datetime.timestamp(datetime.now())
+t = 0
+timeOfLastCommand = t
+
 driveRequest = [0,0,0,0]
 status_motion = "stopped"
 goto_point = [0,0,0]
@@ -54,7 +56,7 @@ def set_drive(parameters):
     driveRequest[3] = int(list[3][:len(list[3])-1])
 
     lastCommand = "drive"
-    timeOfLastCommand = datetime.timestamp(datetime.now()) * 1000
+    timeOfLastCommand = t
 
 def goto(parameters):
     global goto_point, lastCommand, timeOfLastCommand
@@ -64,7 +66,7 @@ def goto(parameters):
     goto_point[1] = float(list[1])
     goto_point[2] = float(list[2][:len(list[2])-1])
     lastCommand = "goto"
-    timeOfLastCommand = datetime.timestamp(datetime.now()) * 1000
+    timeOfLastCommand = t
     
 
 def close():

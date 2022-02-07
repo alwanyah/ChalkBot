@@ -13,7 +13,10 @@ import numpy as np
 #import traceback
 #import json
 
+
+updatePeriod = 10 # milliseconds
 time_since_last_command = 0
+
 
 class Robot(object):
     def __init__(self):
@@ -23,8 +26,8 @@ class Robot(object):
         self.yvel = 0
         self.theta = 0
         self.rvel = 0
-        #self.t = datetime.now()
-        self.lastUpdate = 0
+        self.t = 0
+
         self.lastCommand = "None"
         self.lastCommandTime = 0
         self.printing = False
@@ -39,8 +42,8 @@ class Robot(object):
     def update(self):
 
         global time_since_last_command
-        t = datetime.timestamp(datetime.now()) * 1000
-        time_since_last_command = t - CommandServer.timeOfLastCommand
+        self.t += updatePeriod
+        time_since_last_command = self.t - CommandServer.timeOfLastCommand
 
         if (CommandServer.lastCommand=="drive" and (time_since_last_command < CommandServer.driveRequest[3])):
 
@@ -94,6 +97,7 @@ class Robot(object):
 
         CommandServer.pose = [self.x, self.y]
         CommandServer.orientation = self.theta
+        CommandServer.t = self.t
 
 
 

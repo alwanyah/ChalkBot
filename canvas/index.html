@@ -211,9 +211,18 @@
           function sendTrajectory() {
             sendJSON(
             {
-              "coords": strokes
+              "coords": strokes,
+              "file": false
             });
-          }      
+          }     
+          
+          function sendTrajectoryToFile() {
+            sendJSON(
+            {
+              "coords": strokes,
+              "file": true
+            });
+          }    
 
           function draw_robot(ctx) {
               ctx.beginPath();
@@ -281,6 +290,7 @@
         <div>
           <a id="send" class="" href="#" role="button" onclick="sendTrajectory(); return false">SEND</a>
           <a id="send" class="" href="#" role="button" onclick="simulate(); return false">SIMULATE</a>
+          <a id="send" class="" href="#" role="button" onclick="sendTrajectoryToFile(); return false">SAVE TO FILE</a>
         </div>
 
 </body></html>

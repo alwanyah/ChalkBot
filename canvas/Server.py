@@ -88,10 +88,15 @@ class ChalkbotHandler(SimpleHTTPRequestHandler):
           print(msg)
 
           # do something with the data
+          if (msg['file'] == True):
+            del msg['file']
+            file = open("coords.json","w")
+            file.write(json.dumps(msg))
+            file.close()
 
           result = "DONE!"
 
-          # sed a response
+          # send a response
           self._set_headers()
           self.wfile.write(str(result).encode("utf8"))
 
