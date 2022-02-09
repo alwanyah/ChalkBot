@@ -30,6 +30,19 @@ server = None
 pose = [0,0]
 orientation = 0
 
+def reset():
+    global lastCommand, t, timeOfLastCommand, driveRequest, status_motion, goto_point, pose, orientation
+    lastCommand = None
+    t = 0
+    timeOfLastCommand = t
+
+    driveRequest = [0,0,0,0]
+    status_motion = "stopped"
+    goto_point = [0,0,0]
+
+    pose = [0,0]
+    orientation = 0
+
 def init():
     global server
     ThreadedTCPServer.allow_reuse_address = True
@@ -50,8 +63,13 @@ def set_drive(parameters):
     list = parameters.split(";")
 
     driveRequest[0] = float(list[0][2:])
-    driveRequest[1] = float(list[1])
+    if abs(driveRequest[0]) > 255:
+        driveRequest[0] = 255 * driveRequest[0]/abs(driveRequest[0])
     
+    driveRequest[1] = float(list[1])
+    if abs(driveRequest[1]) > 255:
+        driveRequest[1] = 255 * driveRequest[1]/abs(driveRequest[1])
+
     driveRequest[2] = int(list[2])
     driveRequest[3] = int(list[3][:len(list[3])-1])
 
