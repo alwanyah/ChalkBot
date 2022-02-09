@@ -13,8 +13,6 @@ import numpy as np
 #import traceback
 #import json
 
-
-updatePeriod = 10 # milliseconds
 time_since_last_command = 0
 
 
@@ -22,33 +20,32 @@ class Robot(object):
     def __init__(self):
         self.x = 100
         self.y = 100
-        self.xvel = 0
-        self.yvel = 0
+        self.velocity = 0
         self.theta = 0
         self.rvel = 0
         self.t = 0
 
         self.lastCommand = "None"
         self.lastCommandTime = 0
+        self.updatePeriod = 10 # milliseconds
+
         self.printing = False
 
 
 
     def setVelocitySmooth(self, v, r):
-        self.xvel = 0
-        self.yvel = 0
+        self.velocity = 0
         self.rvel = 0
 
     def update(self):
 
         global time_since_last_command
-        self.t += updatePeriod
+        self.t += self.updatePeriod
         time_since_last_command = self.t - CommandServer.timeOfLastCommand
 
         if (CommandServer.lastCommand=="drive" and (time_since_last_command < CommandServer.driveRequest[3])):
 
-            self.xvel = math.cos(self.theta) * CommandServer.driveRequest[0] * 50/255
-            self.yvel = math.sin(self.theta) * CommandServer.driveRequest[0] * 50/255
+            self.velocity = CommandServer.driveRequest[0]
             self.rvel = CommandServer.driveRequest[1] / (255 * 64)
             self.printing = CommandServer.driveRequest[2] > 0
             CommandServer.status_motion = "moving"
@@ -61,22 +58,24 @@ class Robot(object):
             distance = math.sqrt(xrel*xrel + yrel*yrel)
             angle = -np.arctan2(yrel, xrel)
             self.printing = CommandServer.goto_point[2] > 0
+            
+            maxDistanceError = self.updatePeriod * 2
+            maxAngleError = self.updatePeriod/1000
 
-            maxDistanceError = 30 # mm
-            maxAngleError = 1/100 # Radians - maximum Error
-
-            if distance > maxDistanceError:
+            if distance > maxDistanceError:                 # 
 
                 if abs(angle) > maxAngleError:
-                    self.xvel = 0
-                    self.yvel = 0
+                    self.velocity = 0
                     self.rvel = angle/abs(angle) / 64
 
                 else:
-                    self.xvel = math.cos(self.theta) * 50
-                    self.yvel = math.sin(self.theta) * 50
+                    self.velocity = 255   #  255 is the max pwm
                     self.rvel = 0
+                    if distance/maxDistanceError < 2:
+                        self.velocity = self.velocity /2
                 CommandServer.status_motion = "moving"
+
+
             else:
                 self.printing = False
                 self.setVelocitySmooth(0,0)
@@ -88,10 +87,17 @@ class Robot(object):
             CommandServer.status_motion = "stopped"
 
         #behavior
-        self.x += self.xvel
-        self.y += self.yvel
 
-        self.theta -= self.rvel
+        # We assume a max velocity of the original ChalkBot of 5 m/s = 5 mm/ms
+        # To get the Velocity, we also normalize the pwm.
+        
+        xvel = math.cos(self.theta) * self.velocity
+        yvel = math.sin(self.theta) * self.velocity
+
+        self.x += 5 * self.updatePeriod * xvel / 255
+        self.y += 5 * self.updatePeriod * yvel / 255
+
+        self.theta -= self.rvel * self.updatePeriod/10 # this Translation could be more accurate
         if self.theta > math.pi:
             self.theta -= 2 * math.pi
 

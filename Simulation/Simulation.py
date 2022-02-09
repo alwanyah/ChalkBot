@@ -9,6 +9,7 @@ import Robot
 import gc
 import signal
 from collections import namedtuple
+import json
 
 robot = Robot.Robot()
 
@@ -70,6 +71,7 @@ class ChalkBotSimulation(pantograph.PantographHandler):
         if event.key_code == 27:
             dots = []
             robot = Robot.Robot()
+            CommandServer.reset()
 
 def main():
     print("Ctrl+C to close Server")
@@ -81,6 +83,16 @@ def main():
 
 if __name__ == '__main__':
     factor = float(input("Size of Simulation canvas: "))
+
+    robot.updatePeriod = 1000/float(input("Choose your fps: "))
+    with open("config.json", "r") as jsonFile:
+        data = json.load(jsonFile)
+
+    data["timer_interval"] = robot.updatePeriod
+
+    with open("config.json", "w") as jsonFile:
+        json.dump(data, jsonFile)
+    
     main()
 
 
