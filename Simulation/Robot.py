@@ -13,41 +13,43 @@ import numpy as np
 #import traceback
 #import json
 
-time_since_last_command = 0
+# 
+# Multipliers: multiply with the corresponding pwm to calculate the movement.
 
+v_max = 5   # m/second, which equals 18km/h
+v_factor = v_max / 255
+
+r_max = math.pi # radians per Second
+r_factor = (1 / 255) * (r_max/1000) # max rotational velosity of 180° per Second
 
 class Robot(object):
     def __init__(self):
-        self.x = 100
-        self.y = 100
-        self.velocity = 0
+        self.x = 1000
+        self.y = 1000
         self.theta = 0
-        self.rvel = 0
         self.t = 0
 
-        self.lastCommand = "None"
-        self.lastCommandTime = 0
-        self.updatePeriod = 10 # milliseconds
-
-        self.printing = False
+        self.r_pwm = 0
+        self.v_pwm = 0
+        self.p_pwm = 0
 
 
 
     def setVelocitySmooth(self, v, r):
-        self.velocity = 0
-        self.rvel = 0
+        self.v_pwm = 0
+        self.r_pwm = 0
 
-    def update(self):
+    def update(self, t):
 
-        global time_since_last_command
-        self.t += self.updatePeriod
+        timeDelta = t - self.t
+        self.t = t
         time_since_last_command = self.t - CommandServer.timeOfLastCommand
 
         if (CommandServer.lastCommand=="drive" and (time_since_last_command < CommandServer.driveRequest[3])):
 
-            self.velocity = CommandServer.driveRequest[0]
-            self.rvel = CommandServer.driveRequest[1] / (255 * 64)
-            self.printing = CommandServer.driveRequest[2] > 0
+            self.v_pwm = CommandServer.driveRequest[0]
+            self.r_pwm = CommandServer.driveRequest[1]
+            self.p_pwm = CommandServer.driveRequest[2] > 0
             CommandServer.status_motion = "moving"
 
         elif (CommandServer.lastCommand=="goto"):
@@ -57,32 +59,32 @@ class Robot(object):
 
             distance = math.sqrt(xrel*xrel + yrel*yrel)
             angle = -np.arctan2(yrel, xrel)
-            self.printing = CommandServer.goto_point[2] > 0
+            self.p_pwm = CommandServer.goto_point[2]
             
-            maxDistanceError = self.updatePeriod * 2
-            maxAngleError = self.updatePeriod/1000
+            maxDistanceError = timeDelta * 2
+            maxAngleError = timeDelta/1000
 
             if distance > maxDistanceError:                 # 
 
                 if abs(angle) > maxAngleError:
-                    self.velocity = 0
-                    self.rvel = angle/abs(angle) / 64
+                    self.v_pwm = 0
+                    self.r_pwm = angle/abs(angle) * 255
 
                 else:
-                    self.velocity = 255   #  255 is the max pwm
-                    self.rvel = 0
+                    self.v_pwm = 255   #  255 is the max pwm
+                    self.r_pwm = 0
                     if distance/maxDistanceError < 2:
-                        self.velocity = self.velocity /2
+                        self.v_pwm = self.v_pwm /2
                 CommandServer.status_motion = "moving"
 
 
             else:
-                self.printing = False
+                self.p_pwm = 0
                 self.setVelocitySmooth(0,0)
                 CommandServer.status_motion = "stopped"
 
         else:
-            self.printing = False
+            self.p_pwm = 0
             self.setVelocitySmooth(0,0)
             CommandServer.status_motion = "stopped"
 
@@ -91,19 +93,23 @@ class Robot(object):
         # We assume a max velocity of the original ChalkBot of 5 m/s = 5 mm/ms
         # To get the Velocity, we also normalize the pwm.
         
-        xvel = math.cos(self.theta) * self.velocity
-        yvel = math.sin(self.theta) * self.velocity
+        velocity = self.v_pwm * v_factor
 
-        self.x += 5 * self.updatePeriod * xvel / 255
-        self.y += 5 * self.updatePeriod * yvel / 255
+        xvel = math.cos(self.theta) * velocity
+        yvel = math.sin(self.theta) * velocity
 
-        self.theta -= self.rvel * self.updatePeriod/10 # this Translation could be more accurate
+        self.x += timeDelta * xvel
+        self.y += timeDelta * yvel
+
+        rvel = self.r_pwm * r_factor
+
+        self.theta -= rvel * timeDelta
         if self.theta > math.pi:
             self.theta -= 2 * math.pi
 
         CommandServer.pose = [self.x, self.y]
         CommandServer.orientation = self.theta
-        CommandServer.t = self.t
+        #CommandServer.t = self.t
 
 
 

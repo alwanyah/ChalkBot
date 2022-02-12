@@ -17,7 +17,11 @@ factor = 1
 
 dots = []
 radius = 10/factor
-offset = [30/factor, 20/factor]
+offset = [30/factor, 20/factor]             # dont move the paint, move the robot image
+
+t = 0             # Simulationtime in Milliseconds
+updatePeriod = 50 # milliseconds
+robot_ticks = 5   # amount of updates the robot will clalculate per frame
 
 def signal_handler(sig, frame):
     CommandServer.close()
@@ -37,12 +41,24 @@ class ChalkBot(object):
         self.shape = pantograph.Image("tutrobot.png",robot.x/(10*factor), robot.y/(10*factor), 60/factor, 40/factor)
         self.theta = robot.theta
 
-    def update(self, canvas): # ca 1 update alle 12 ms aber wir gehen von 10 ms aus, also 100 pro sekunde.
+    def update(self, canvas):
 
-        robot.update()
+        global t, dots
 
-        self.shape.x = robot.x/(10*factor)
-        self.shape.y = robot.y/(10*factor)
+        for i in range(robot_ticks):
+            robot.update(t)
+            t += updatePeriod/robot_ticks
+            if robot.p_pwm:
+                dots.append([robot.x, robot.y])
+            CommandServer.t = t
+        
+        for dot in dots:
+            pantograph.Circle(dot[0]/10*factor, dot[1]/10*factor, radius, "#f00").draw(canvas)
+            #self.fill_circle(dot[0], dot[1], radius, "#f00")
+            #self.draw("brush", x=dot[0], y=dot[1], lineColor="#f00")
+
+        self.shape.x = robot.x/(10*factor) - offset[0]
+        self.shape.y = robot.y/(10*factor) - offset[1]
 
         self.shape.rotate(robot.theta)
 
@@ -56,19 +72,12 @@ class ChalkBotSimulation(pantograph.PantographHandler):
 
     def update(self):
         self.clear_rect(0, 0, self.width, self.height)
-
-        gc.disable()
-        if robot.printing:
-            dots.append([self.chalkbot.shape.x + offset[0], self.chalkbot.shape.y + offset[1]])
-        for dot in dots:
-            pantograph.Circle(dot[0], dot[1], radius, "#f00").draw(self)
-        gc.enable()
-
         self.chalkbot.update(self)
 
     def on_key_down(self, event):
-        global dots, robot
+        global dots, robot, t
         if event.key_code == 27:
+            t = 0
             dots = []
             robot = Robot.Robot()
             CommandServer.reset()
@@ -78,21 +87,20 @@ def main():
     print("Press ESC to reset the canvas.")
     CommandServer.init()
     app = pantograph.SimplePantographApplication(ChalkBotSimulation)
+    #print(app.constr_args)
     app.run()
+    
 
 
 if __name__ == '__main__':
+
     factor = float(input("Size of Simulation canvas: "))
 
-    robot.updatePeriod = 1000/float(input("Choose your fps: "))
     with open("config.json", "r") as jsonFile:
         data = json.load(jsonFile)
 
-    data["timer_interval"] = robot.updatePeriod
+    updatePeriod = data["timer_interval"]
 
-    with open("config.json", "w") as jsonFile:
-        json.dump(data, jsonFile)
-    
     main()
 
 
