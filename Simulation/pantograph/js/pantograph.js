@@ -89,7 +89,7 @@ pantograph.drawCircle = function(ctx, circle) {
 pantograph.drawBrush = function(ctx, circle) {
 	console.log(circle);
 	ctx.beginPath();
-	ctx.arc(circle.x, circle.y, 20, 	0, 2 * Math.PI, true);
+	ctx.arc(circle.x, circle.y, circle.radius, 0, 2 * Math.PI, true);
 	if (circle.lineColor) {
 		ctx.strokeStyle = circle.lineColor;
 		ctx.stroke();

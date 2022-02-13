@@ -62,13 +62,15 @@ class Robot(object):
             self.p_pwm = CommandServer.goto_point[2]
             
             maxDistanceError = timeDelta*2
-            maxAngleError = 1/100
+            maxAngleError = timeDelta/1000
 
             if distance > maxDistanceError:                 # 
 
                 if abs(angle) > maxAngleError:
                     self.v_pwm = 0
                     self.r_pwm = angle/abs(angle) * 255
+                    if angle/maxAngleError < 2:
+                        self.r_pwm = self.r_pwm/2
 
                 else:
                     self.v_pwm = 255   #  255 is the max pwm
