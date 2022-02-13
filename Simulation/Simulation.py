@@ -58,9 +58,9 @@ class ChalkBot(object):
             CommandServer.t = t
         
         for dot in dots:
-            pantograph.Circle(dot[0]/10*factor, dot[1]/10*factor, radius, "#f00").draw(canvas)
-            #self.fill_circle(dot[0], dot[1], radius, "#f00")
-            #self.draw("brush", x=dot[0], y=dot[1], lineColor="#f00")
+            #pantograph.Circle(dot[0]/10*factor, dot[1]/10*factor, radius, "#f00").draw(canvas)
+            #canvas.fill_circle(dot[0], dot[1], radius, color="#f00")
+            canvas.draw("brush", x=dot[0]/10*factor, y=dot[1]/10*factor, radius=radius, lineColor="#f00")
 
         self.shape.x = robot.x/(10*factor) - offset[0]
         self.shape.y = robot.y/(10*factor) - offset[1]
