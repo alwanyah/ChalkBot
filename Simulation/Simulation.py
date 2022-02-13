@@ -20,7 +20,12 @@ radius = 10/factor
 offset = [30/factor, 20/factor]             # dont move the paint, move the robot image
 
 t = 0             # Simulationtime in Milliseconds
-updatePeriod = 50 # milliseconds
+with open("config.json", "r") as jsonFile:
+        data = json.load(jsonFile)
+
+updatePeriod = data["timer_interval"] # milliseconds
+#print(updatePeriod)
+
 robot_ticks = 5   # amount of updates the robot will clalculate per frame
 
 def signal_handler(sig, frame):
@@ -95,12 +100,6 @@ def main():
 if __name__ == '__main__':
 
     factor = float(input("Size of Simulation canvas: "))
-
-    with open("config.json", "r") as jsonFile:
-        data = json.load(jsonFile)
-
-    updatePeriod = data["timer_interval"]
-
     main()
 
 

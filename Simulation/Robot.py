@@ -61,8 +61,8 @@ class Robot(object):
             angle = -np.arctan2(yrel, xrel)
             self.p_pwm = CommandServer.goto_point[2]
             
-            maxDistanceError = timeDelta * 2
-            maxAngleError = timeDelta/1000
+            maxDistanceError = timeDelta*2
+            maxAngleError = 1/100
 
             if distance > maxDistanceError:                 # 
 
