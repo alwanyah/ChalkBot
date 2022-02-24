@@ -85,7 +85,7 @@ void loop() {
   Serial.print(",");
   Serial.print(velocity*180.0f/PI); // verlocity in deg/s
   Serial.print(",");
-  Serial.print(2.0f*PI / velocity / 60.0); // RPM
+  Serial.print(velocity / (2.0f*PI) * 60.0); // RPM
   Serial.println();  
   
 }
