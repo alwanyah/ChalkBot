@@ -80,7 +80,12 @@ void loop() {
   */
   
   // plot rising counts
-  Serial.print(velocity);
+  
+  Serial.print(velocity); // verlocity in rad/s
+  Serial.print(",");
+  Serial.print(velocity*180.0f/PI); // verlocity in deg/s
+  Serial.print(",");
+  Serial.print(2.0f*PI / velocity / 60.0); // RPM
   Serial.println();  
   
 }
