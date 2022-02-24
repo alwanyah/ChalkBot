@@ -3,6 +3,7 @@
 uint8_t pwmPin = 8; // PWM
 uint8_t dirPin = 9; // direction
 
+// also works for MD10C
 CytronMD20A motor(pwmPin, dirPin);
 
 void setup()
