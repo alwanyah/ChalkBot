@@ -51,9 +51,15 @@ void updateVelocity()
 void onA() {
   updateVelocity();
 
+  /*
   int a = digitalRead(encoderPinA);
   int b = digitalRead(encoderPinB);
   if (a == b) {
+    velocity = -velocity;
+  }
+  */
+
+  if(readA == readB) {
     velocity = -velocity;
   }
 }
@@ -61,9 +67,15 @@ void onA() {
 void onB() {
   updateVelocity();
 
+  /*
   int a = digitalRead(encoderPinA);
   int b = digitalRead(encoderPinB);
   if (a != b) {
+    velocity = -velocity;
+  }
+  */
+
+  if(readA == readB) {
     velocity = -velocity;
   }
 }
