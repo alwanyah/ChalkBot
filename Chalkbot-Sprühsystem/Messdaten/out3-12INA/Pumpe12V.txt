@@ -1,0 +1,2 @@
+Bei 5V und 0,8A pump die 12V-Pumpe garnichts. 
+Sie gibt ein ganz leises Pochen von sich wie bei einem schwachen Herzschlag und es ist hörbar, dass die Spannung nicht ausreicht um die Membran ausreichend zu bewegen.
