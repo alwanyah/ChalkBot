@@ -1,4 +1,4 @@
-Test dauerhaft in der Luft für eine Minute; Pumpe 6V INA219 ; Stromquelle 5V und 0.8A
+Test pumpen Luft fuer 1 Minute
 3.39 
 3.41 
 3.40 

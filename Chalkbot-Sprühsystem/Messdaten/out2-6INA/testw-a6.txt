@@ -1,4 +1,4 @@
-Test für Wasser vs. Luft Start im Wasser mit Ina219 und 6V Pumpe 3mal in Luft Stromquelle 5V und 0.8A
+Test für Wasser vs. Luft Start im Wasser(3mal Luft)
 3.41 
 3.40 
 3.40 

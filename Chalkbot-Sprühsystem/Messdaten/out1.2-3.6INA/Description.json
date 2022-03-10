@@ -1,7 +1,7 @@
 {
+"Measuring": "Current in mA",
 "Sensor": "INA219",
 "Pump": "3.6/3.7V",
-"Measuring": "Current in mA",
 "Voltage": "5V",
 "Amper": "0.8A"
 }

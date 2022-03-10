@@ -1,4 +1,4 @@
-Test Luft pumpen und Schlauch 3mal per Hand zsm.drücken vor der Pumpe; Pumpe 3.6V INA219 Stromquelle 5V und 0.8A
+Test Luft pumpen & Schlauch 3mal zsm.drücken vor der Pumpe
 0.61 
 0.20 
 0.32 

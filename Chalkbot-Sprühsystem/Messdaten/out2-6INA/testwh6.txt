@@ -1,4 +1,4 @@
-Test Wasser pumpen und Schlauch 3mal per Hand zsm.drücken nach der Pumpe; Pumpe 6V INA219 Stromquelle 5V und 0.8A
+Test Wasser pumpen & Schlauch 3mal zsm.drücken nach der Pumpe
 3.62 
 3.60 
 3.60 

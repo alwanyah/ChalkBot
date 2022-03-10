@@ -1,4 +1,4 @@
-Testdaten
+Test pumpen Luft fuer 1 Minute
 -0.20 
 -0.30 
 -0.20 

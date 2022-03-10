@@ -1,4 +1,4 @@
-testdaten
+Test Luft pumpen & Schlauch 3mal zsm.drücken vor der Pumpe
 -0.10 
 -0.50 
 0.10 

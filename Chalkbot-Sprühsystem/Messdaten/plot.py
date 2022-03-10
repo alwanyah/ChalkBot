@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 
 dpi=300
 DEFAULT_SETTINGS = json.loads(
-    '{"y-label":"y-label","x-label":"time in 10 ms", "sensor":"Sensor", "pumpe":"Pumpe", "voltage":"Voltage", "amper":"Amper"}')
+    '{"y-label":"y-label","x-label":"Time in 10 ms", "sensor":"Sensor", "pumpe":"Pumpe", "voltage":"Voltage", "amper":"Amper"}')
 
 
 def get_file():

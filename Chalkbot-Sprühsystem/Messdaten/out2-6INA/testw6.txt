@@ -1,4 +1,4 @@
-Test Schlauch im Wasser die ganze Zeit für eine Minute ohne Unterbrechung Pumpe 6V Ina219 Stromquelle 5V und 0.8A
+Test pumpen Wasser 1 Minute
 3.94 
 3.66 
 3.74 
