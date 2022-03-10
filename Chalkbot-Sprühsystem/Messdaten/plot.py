@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 
 dpi=300
 DEFAULT_SETTINGS = json.loads(
-    '{"x-label":"x-label","y-label":"time in 10 ms", "sensor":"Sensor", "pumpe":"Pumpe", "voltage":"Voltage", "amper":"Amper"}')
+    '{"y-label":"y-label","x-label":"time in 10 ms", "sensor":"Sensor", "pumpe":"Pumpe", "voltage":"Voltage", "amper":"Amper"}')
 
 
 def get_file():
@@ -58,7 +58,7 @@ def plot(file, Description):
     path = file.split("/")[0] + "/img"
     os.makedirs(path, exist_ok=True)
     fig.savefig(file.split("/")[0] + "/img/" + file.split("/")[1].split(".txt")[0] + ".png", dpi=dpi)
-    print("Sucesfully created " + file.split("/")[0] + "/img/" + file.split("/")[1].split(".txt")[0] + ".png")
+    print("Successfully created " + file.split("/")[0] + "/img/" + file.split("/")[1].split(".txt")[0] + ".png")
     plt.close(fig)
     return None
 
