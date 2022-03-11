@@ -3,30 +3,30 @@
         <title>Mouse/Canvas Test</title>
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="viewport" content="user-scalable=no, width=device-width">
-        
+
         <style type="text/css">
             canvas { border: 1px dashed red;}
         </style>
 
         <script type="text/javascript" src="js/client.js"> </script>
         <script type="text/javascript" src="js/numeric-1.js"></script>
-        
+
         <script type="text/javascript">
-         
+
             function dist2(p1, p2) {
                 var dx = p1[0] - p2[0];
                 var dy = p1[1] - p2[1];
                 return dx * dx + dy * dy;
             }
-            
+
             var strokes = [];
             var trajectory = [];
-            
-            window.onload = function() 
+
+            window.onload = function()
             {
                 var canvas = document.getElementById("canvas");
                 var context = canvas.getContext("2d");
-                
+
                /**
                * Draw an arrowhead on a line on an HTML5 canvas.
                *
@@ -73,7 +73,7 @@
                   context.fillStyle = "#000";
                   context.fill();
                 }
-                
+
                 function draw_marker(x, y, r, c) {
                     context.beginPath();
                     context.arc(x, y, r, 0, Math.PI*2);
@@ -81,10 +81,10 @@
                     context.fillStyle = c;
                     context.fill();
                 }
-               
-                
-                function draw_segment(x1, y1, x2, y2) 
-                {    
+
+
+                function draw_segment(x1, y1, x2, y2)
+                {
                     context.beginPath();
                     context.moveTo(x1, y1);
                     context.lineTo(x2, y2);
@@ -92,28 +92,28 @@
                     context.stroke();
                     context.closePath();
                 }
-                
-                function simplify_spline(spold, tolerance) 
+
+                function simplify_spline(spold, tolerance)
                 {
                     // Simplifies the source spline by trying to find a smaller set of points
                     // which fit within @tolerance.
-                    
+
                     var tolerance2 = tolerance ? tolerance * tolerance : 10;
                     var subdivide = [ 1./4, 3./8, 1./2, 5./8, 3./4 ];
                     var ts = [ 0, 1 ];
                     var spnew = numeric.spline(ts, spold.at(ts));
-                    
+
                     for (var j=0; j<6; j++) {
                         for (var i=ts.length-1; i>0; i--) {
                             var mt;
                             var mdd = 0;
-                            for (var k in subdivide) {    
+                            for (var k in subdivide) {
                                 var t = ts[i] * subdivide[k] + ts[i-1] * (1 - subdivide[k]);
-                                
+
                                 var po = spold.at(t);
                                 var pn = spnew.at(t);
                                 var dd = dist2(po, pn);
-                            
+
                                 if (dd > mdd) {
                                     mt = t;
                                     mdd = dd;
@@ -125,7 +125,7 @@
                         }
                         spnew = numeric.spline(ts, spold.at(ts));
                     }
-                    
+
                     /*
                     for (var i=0; i<ts.length; i++) {
                         var xy = spnew.at(ts[i]);
@@ -133,7 +133,7 @@
                     }*/
                     return spnew;
                 }
-                
+
                 function draw_spline(spline, style) {
                     var xys = spline.at(numeric.linspace(0,1,100));
                     context.beginPath();
@@ -145,26 +145,26 @@
                     context.stroke();
                     context.closePath();
                 }
-                
-                
-                canvas.onmousedown = canvas.ontouchstart = function (e) 
-                {    
+
+
+                canvas.onmousedown = canvas.ontouchstart = function (e)
+                {
                     var td = 0;
                     var ox = e.clientX || e.touches[0].pageX;
                     var oy = e.clientY || e.touches[0].pageY;
                     var xys = [ [ox, oy] ];
-                    var dds = [ 0 ]; 
-                    
+                    var dds = [ 0 ];
+
                     // draw start
                     draw_marker(ox, oy, 4, "#A00");
-                    
-                    canvas.onmousemove = canvas.ontouchmove = function (e) 
+
+                    canvas.onmousemove = canvas.ontouchmove = function (e)
                     {
                         e.preventDefault();
-                        
+
                         var nx = e.clientX || e.touches[0].pageX;
                         var ny = e.clientY || e.touches[0].pageY;
-                        
+
                         var dx = nx - ox;
                         var dy = ny - oy;
                         var dd = Math.sqrt(dx*dx + dy*dy);
@@ -178,12 +178,12 @@
                             oy = ny;
                         }
                     }
-                    
-                    canvas.onmouseup = canvas.onmouseout = canvas.ontouchend = function (e) 
+
+                    canvas.onmouseup = canvas.onmouseout = canvas.ontouchend = function (e)
                     {
                         canvas.onmousemove = canvas.ontouchmove = null;
-                        
-                        if (dds.length > 1) 
+
+                        if (dds.length > 1)
                         {
                             var ts = [];
                             for (var i in dds) {
@@ -191,38 +191,38 @@
                             }
                             var ss = numeric.spline(ts, xys);
                             //draw_spline(ss, "#F00");
-                            
+
                             var ss2 = simplify_spline(ss);
                             draw_spline(ss2, "#00F");
-                            
+
                             // draw end
                             draw_marker(ox, oy, 4, "#0A0");
-                            
+
                             // store the trajectory
                             strokes.push(xys);
                             trajectory = ss;
-                        }    
+                        }
                     };
-                    
-                }
-            };  
 
-            
+                }
+            };
+
+
           function sendTrajectory() {
             sendJSON(
             {
               "coords": strokes,
               "file": false
             });
-          }     
-          
+          }
+
           function sendTrajectoryToFile() {
             sendJSON(
             {
               "coords": strokes,
               "file": true
             });
-          }    
+          }
 
           function draw_robot(ctx) {
               ctx.beginPath();
@@ -232,53 +232,53 @@
               ctx.fill();
           }
 
-          
+
           var startTime = 0;
           var background;
-          
+
           var robotx = 0;
           var roboty = 0;
           var robotr = 0;
-          
+
           function simulate() {
              var canvas = document.getElementById('canvas');
              var ctx = canvas.getContext('2d');
-             
+
              console.log([canvas.width, canvas.height]);
              background = ctx.getImageData(0, 0, canvas.width, canvas.height);
-             
+
              var d = new Date();
              startTime = d.getTime();
-             
+
              window.requestAnimationFrame(simulate_draw);
           }
-          
-          
+
+
           function simulate_draw() {
             var ctx = document.getElementById('canvas').getContext('2d');
-            
+
             ctx.globalCompositeOperation = 'destination-over';
             // clear canvas
             ctx.putImageData(background, 0, 0);
-            
+
             // draw the robot
             var d = new Date();
             var t = d.getTime() - startTime;
             t /= 10000;
             var xy = trajectory.at(t);
             console.log(t);
-            
+
             rotation = Math.atan2(xy[1] - roboty, xy[0] - robotx);
-            
+
             robotx = xy[0];
             roboty = xy[1];
-            
+
             ctx.save();
             ctx.translate(robotx, roboty);
             ctx.rotate(rotation);
             draw_robot(ctx);
             ctx.restore();
-            
+
             if(t <= 1) {
               window.requestAnimationFrame(simulate_draw);
             }
