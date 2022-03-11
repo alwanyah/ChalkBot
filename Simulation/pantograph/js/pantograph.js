@@ -12,6 +12,32 @@ pantograph.hiddenCanvas.width = canvas.width;
 pantograph.hiddenCanvas.height = canvas.height;
 pantograph.hiddenContext = pantograph.hiddenCanvas.getContext("2d");
 
+
+//this is for saving the coords of the chalkbotdrawing:
+var chalk_drawing = [];
+
+pantograph.saveChalk = function(ctx, circle) {
+	chalk_drawing.push(circle);
+}
+
+pantograph.drawBrush = function(ctx) {
+
+	for (var i = 0; i < chalk_drawing.length; i+=1) {
+		var circle = chalk_drawing[i];
+		console.log(circle);
+		ctx.beginPath();
+		ctx.arc(circle.x, circle.y, circle.radius, 0, 2 * Math.PI, true);
+		if (circle.lineColor) {
+			ctx.strokeStyle = circle.lineColor;
+			ctx.stroke();
+		}
+		if (circle.fillColor) {
+			ctx.fillStyle = circle.fillColor;
+			ctx.fill();
+		}
+	}
+}
+
 pantograph.input_handler = function (e) {
 	var ws = pantograph.socket;
 	var message = {
@@ -76,20 +102,6 @@ pantograph.clearRect = function (ctx, rect) {
 pantograph.drawCircle = function(ctx, circle) {
 	ctx.beginPath();
 	ctx.arc(circle.x, circle.y, circle.radius, 	0, 2 * Math.PI, true);
-	if (circle.lineColor) {
-		ctx.strokeStyle = circle.lineColor;
-		ctx.stroke();
-	}
-	if (circle.fillColor) {
-		ctx.fillStyle = circle.fillColor;
-		ctx.fill();
-	}
-}
-
-pantograph.drawBrush = function(ctx, circle) {
-	console.log(circle);
-	ctx.beginPath();
-	ctx.arc(circle.x, circle.y, circle.radius, 0, 2 * Math.PI, true);
 	if (circle.lineColor) {
 		ctx.strokeStyle = circle.lineColor;
 		ctx.stroke();
@@ -182,7 +194,8 @@ pantograph.shapeToFunc = {
 	line: pantograph.drawLine,
 	polygon: pantograph.drawPolygon,
 	compound: pantograph.drawCompound,
-	brush: pantograph.drawBrush
+	brush: pantograph.drawBrush,
+	save: pantograph.saveChalk
 }
 
 pantograph.socket.onopen = function(e) {

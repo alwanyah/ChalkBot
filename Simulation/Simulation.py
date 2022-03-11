@@ -54,19 +54,21 @@ class ChalkBot(object):
             robot.update(t)
             t += updatePeriod/robot_ticks
             if robot.p_pwm:
-                dots.append([robot.x, robot.y])
+                canvas.draw("save", x=robot.x/10*factor, y=robot.y/10*factor, radius=radius, lineColor="#f00")
+                print("TEST")
+                #dots.append([robot.x, robot.y])
             CommandServer.t = t
         
-        for dot in dots:
+        #for dot in dots:
             #pantograph.Circle(dot[0]/10*factor, dot[1]/10*factor, radius, "#f00").draw(canvas)
             #canvas.fill_circle(dot[0], dot[1], radius, color="#f00")
-            canvas.draw("brush", x=dot[0]/10*factor, y=dot[1]/10*factor, radius=radius, lineColor="#f00")
+        #   canvas.draw("brush", x=dot[0]/10*factor, y=dot[1]/10*factor, radius=radius, lineColor="#f00")
 
         self.shape.x = robot.x/(10*factor) - offset[0]
         self.shape.y = robot.y/(10*factor) - offset[1]
 
         self.shape.rotate(robot.theta)
-
+        canvas.draw("brush")
         self.shape.draw(canvas)
 
 class ChalkBotSimulation(pantograph.PantographHandler):
