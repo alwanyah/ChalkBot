@@ -11,6 +11,7 @@ import signal
 from collections import namedtuple
 import json
 
+
 robot = Robot.Robot()
 
 factor = 1
@@ -55,8 +56,6 @@ class ChalkBot(object):
             t += updatePeriod/robot_ticks
             if robot.p_pwm:
                 canvas.draw("save", x=robot.x/10*factor, y=robot.y/10*factor, radius=radius, lineColor="#f00")
-                print("TEST")
-                #dots.append([robot.x, robot.y])
             CommandServer.t = t
         
         #for dot in dots:

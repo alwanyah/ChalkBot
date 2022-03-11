@@ -15,6 +15,7 @@ import traceback
 import json
 import numpy as np
 import Robot
+import webbrowser
 
 PORT = 8000
 
@@ -48,6 +49,7 @@ def init():
     ThreadedTCPServer.allow_reuse_address = True
     server = ThreadedTCPServer(("", PORT), SimulationHandler)
     threading.Thread(target=server.serve_forever).start()
+    webbrowser.open('localhost:8080', new=2)
 def log(x):
     if (x > 0):
         return math.log(x)
