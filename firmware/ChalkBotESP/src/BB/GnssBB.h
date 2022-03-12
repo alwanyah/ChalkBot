@@ -6,7 +6,10 @@
 class GnssBB {
   friend class Gnss;
 
-  bool globalPositionValid = false;
+  bool initialized = false;
+  bool ntripConnected = false;
+
+  unsigned long globalTimestamp = 0; // millis()
   double latitude = 0.0; // deg
   double longitude = 0.0; // deg
   double heightAboveCenter = 0.0; // m
@@ -14,7 +17,7 @@ class GnssBB {
   double horizontalAccuracy = 0.0; // m
   double verticalAccuracy = 0.0; // m
 
-  bool relativePositionValid = false;
+  unsigned long relativeTimestamp = 0; // millis()
   double north = 0.0; // m
   double east = 0.0; // m
   double down = 0.0; // m
@@ -22,10 +25,13 @@ class GnssBB {
   double eastAccuracy = 0.0; // m
   double downAccuracy = 0.0; // m
 
-  bool headingValid = false;
+  unsigned long motionTimestamp = 0; // millis()
   double heading = 0.0; // deg
   double headingAccuracy = 0.0; // deg
+  double speed = 0.0; // m/s
+  double speedAccuracy = 0.0; // m/s
 
+  int satellites = 0;
   bool fix = false;
   bool correction = false;
 
@@ -35,8 +41,17 @@ class GnssBB {
   unsigned long updateDuration = 0; // ms
 
 public:
-  bool hasGlobalPosition() const {
-    return globalPositionValid;
+  bool isInitialized() const {
+    return initialized;
+  }
+
+  bool isNtripConnected() const {
+    return ntripConnected;
+  }
+
+
+  unsigned long getGlobalTimestamp() const {
+    return globalTimestamp;
   }
 
   double getLatitude() const {
@@ -64,8 +79,8 @@ public:
   }
 
 
-  bool hasRelativePosition() const {
-    return relativePositionValid;
+  unsigned long getRelativeTimestamp() const {
+    return relativeTimestamp;
   }
 
   double getNorth() const {
@@ -93,8 +108,8 @@ public:
   }
 
 
-  bool hasHeading() const {
-    return headingValid;
+  unsigned long getMotionTimestamp() const {
+    return motionTimestamp;
   }
 
   double getHeading() const {
@@ -105,6 +120,18 @@ public:
     return headingAccuracy;
   }
 
+  double getSpeed() const {
+    return speed;
+  }
+
+  double getSpeedAccuracy() const {
+    return speedAccuracy;
+  }
+
+
+  int getSatellites() const {
+    return satellites;
+  }
 
   bool hasFix() const {
     return fix;

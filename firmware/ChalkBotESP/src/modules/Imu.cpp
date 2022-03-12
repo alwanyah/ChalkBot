@@ -14,7 +14,7 @@ bool Imu::begin() {
         logger.log_info("BNO055 connected!");
         delay(1000); // FIXME: ist das nötig?
         bno.setExtCrystalUse(true);
-        bb::imu.connected = true;
+        bb::imu.initialized = true;
         return true;
     }
 }
@@ -22,6 +22,17 @@ bool Imu::begin() {
 void Imu::update() {
     // update orientation
     imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
-    double orientation = Math::fromDegrees(-euler.x());
-    bb::imu.orientation = Math::normalize(orientation);
+    bb::imu.heading = euler.x();
+    bb::imu.roll = euler.y();
+    bb::imu.pitch = euler.z();
+
+    bb::imu.orientation = Math::normalize(Math::fromDegrees(-euler.x()));
+
+    // update calibration
+    bno.getCalibration(
+        &bb::imu.systemCalibration,
+        &bb::imu.gyroscopeCalibration,
+        &bb::imu.accelerometerCalibration,
+        &bb::imu.magnetometerCalibration
+    );
 }

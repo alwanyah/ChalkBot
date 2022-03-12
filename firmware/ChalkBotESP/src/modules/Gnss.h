@@ -15,7 +15,6 @@ class Gnss : private Stream {
 
   SFE_UBLOX_GNSS base;
   WiFiClient ntripClient;
-  bool ntripConnected = false;
 
   uint8_t nmea_buffer[NMEA_BUFFER_SIZE];
   size_t nmea_buffer_head = 0;
@@ -28,6 +27,7 @@ public:
   bool update();
 
 private:
+  void updatePVT(UBX_NAV_PVT_data_t *data);
   void updateHPPOSLLH(UBX_NAV_HPPOSLLH_data_t *data);
   void updateRELPOSNED(UBX_NAV_RELPOSNED_data_t *data);
 

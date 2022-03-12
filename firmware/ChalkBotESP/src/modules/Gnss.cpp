@@ -52,16 +52,16 @@ bool Gnss::begin() {
 
     // enable non-blocking mode
     // PVT = position/velocity/time
-    // if (!base.setAutoPVT(true)) {
-    //   logger.log_warn("Failed to enable non-blocking mode for PVT.");
-    //   continue;
-    // }
-
-    // HPPOSLLH = high precision position latitude/longitude/height
-    if (!base.setAutoHPPOSLLH(true)) {
-      logger.log_warn("Failed to enable non-blocking mode for HPPOSLLH.");
+    if (!base.setAutoPVT(true)) {
+      logger.log_warn("Failed to enable non-blocking mode for PVT.");
       continue;
     }
+
+    // // HPPOSLLH = high precision position latitude/longitude/height
+    // if (!base.setAutoHPPOSLLH(true)) {
+    //   logger.log_warn("Failed to enable non-blocking mode for HPPOSLLH.");
+    //   continue;
+    // }
 
     // RELPOSNED = relative position north/east/down
     if (!base.setAutoRELPOSNED(true)) {
@@ -78,6 +78,8 @@ bool Gnss::begin() {
     // base.setProcessNMEAMask(SFE_UBLOX_FILTER_NMEA_GGA);
 
     base.setNMEAOutputPort(*this);
+
+    bb::gnss.initialized = true;
 
     logger.log_info("GNSS initialized.");
     return true;
@@ -107,11 +109,17 @@ bool Gnss::update() {
     bb::gnss.ntripRtcmByesReceived = 0;
   }
 
-  if (base.packetUBXNAVHPPOSLLH != NULL && base.packetUBXNAVHPPOSLLH->moduleQueried.moduleQueried.all != 0) {
-    updateHPPOSLLH(&base.packetUBXNAVHPPOSLLH->data);
-    base.flushHPPOSLLH();
+  if (base.packetUBXNAVPVT != NULL && base.packetUBXNAVPVT->moduleQueried.moduleQueried1.all != 0) {
+    updatePVT(&base.packetUBXNAVPVT->data);
+    base.flushPVT();
     hasUpdate = true;
   }
+
+  // if (base.packetUBXNAVHPPOSLLH != NULL && base.packetUBXNAVHPPOSLLH->moduleQueried.moduleQueried.all != 0) {
+  //   updateHPPOSLLH(&base.packetUBXNAVHPPOSLLH->data);
+  //   base.flushHPPOSLLH();
+  //   hasUpdate = true;
+  // }
 
   if (base.packetUBXNAVRELPOSNED != NULL && base.packetUBXNAVRELPOSNED->moduleQueried.moduleQueried.all != 0) {
     updateRELPOSNED(&base.packetUBXNAVRELPOSNED->data);
@@ -127,35 +135,48 @@ bool Gnss::update() {
   return hasUpdate;
 }
 
-void Gnss::updateHPPOSLLH(UBX_NAV_HPPOSLLH_data_t *data) {
-  if (data->flags.bits.invalidLlh) {
-    bb::gnss.globalPositionValid = false;
-    return;
+void Gnss::updatePVT(UBX_NAV_PVT_data_t *data) {
+  if (!data->flags3.bits.invalidLlh) {
+    bb::gnss.latitude = data->lat / 1e7;
+    bb::gnss.longitude = data->lon / 1e7;
+    bb::gnss.heightAboveCenter = data->height / 1e3;
+    bb::gnss.heightAboveSea = data->hMSL / 1e3;
+    bb::gnss.horizontalAccuracy = data->hAcc / 1e4;
+    bb::gnss.verticalAccuracy = data->vAcc / 1e4;
+    bb::gnss.globalTimestamp = millis();
   }
-  bb::gnss.globalPositionValid = data->hAcc != UINT32_MAX;
-  bb::gnss.latitude = data->lat / 1e7 + data->latHp / 1e9;
-  bb::gnss.longitude = data->lon / 1e7 + data->lonHp / 1e9;
-  bb::gnss.heightAboveCenter = data->height / 1e3 + data->heightHp / 1e4;
-  bb::gnss.heightAboveSea = data->hMSL / 1e3 + data->hMSLHp / 1e4;
-  bb::gnss.horizontalAccuracy = data->hAcc / 1e4;
-  bb::gnss.verticalAccuracy = data->vAcc / 1e4;
+
+  bb::gnss.heading = data->headMot / 1e5;
+  bb::gnss.headingAccuracy = data->headAcc / 1e5;
+  bb::gnss.speed = data->gSpeed / 1e3;
+  bb::gnss.speedAccuracy = data->sAcc / 1e3;
+  bb::gnss.motionTimestamp = millis();
+
+  bb::gnss.satellites = data->numSV;
+}
+
+// currently unused
+void Gnss::updateHPPOSLLH(UBX_NAV_HPPOSLLH_data_t *data) {
+  if (!data->flags.bits.invalidLlh) {
+    bb::gnss.latitude = data->lat / 1e7 + data->latHp / 1e9;
+    bb::gnss.longitude = data->lon / 1e7 + data->lonHp / 1e9;
+    bb::gnss.heightAboveCenter = data->height / 1e3 + data->heightHp / 1e4;
+    bb::gnss.heightAboveSea = data->hMSL / 1e3 + data->hMSLHp / 1e4;
+    bb::gnss.horizontalAccuracy = data->hAcc / 1e4;
+    bb::gnss.verticalAccuracy = data->vAcc / 1e4;
+    bb::gnss.globalTimestamp = millis();
+  }
 }
 
 void Gnss::updateRELPOSNED(UBX_NAV_RELPOSNED_data_t *data) {
-  bb::gnss.relativePositionValid = data->flags.bits.relPosValid;
-  if (bb::gnss.relativePositionValid) {
-    bb::gnss.relativePositionValid = true;
+  if (data->flags.bits.relPosValid) {
     bb::gnss.north = data->relPosN / 1e2 + data->relPosHPN / 1e4;
     bb::gnss.east = data->relPosE / 1e2 + data->relPosHPE / 1e4;
     bb::gnss.down = data->relPosD / 1e2 + data->relPosHPD / 1e4;
     bb::gnss.northAccuracy = data->accN / 1e4;
     bb::gnss.eastAccuracy = data->accE / 1e4;
     bb::gnss.downAccuracy = data->accD / 1e4;
-  }
-
-  bb::gnss.headingValid = data->flags.bits.relPosHeadingValid;
-  if (bb::gnss.headingValid) {
-    bb::gnss.heading = data->relPosHeading / 1e5;
+    bb::gnss.relativeTimestamp = millis();
   }
 
   bb::gnss.fix = data->flags.bits.gnssFixOK;
@@ -164,7 +185,7 @@ void Gnss::updateRELPOSNED(UBX_NAV_RELPOSNED_data_t *data) {
 
 bool Gnss::ntripConnect() {
   static unsigned long last_failed_attempt = 0;
-  if (ntripConnected) {
+  if (bb::gnss.ntripConnected) {
     return true;
   }
   if (millis() - last_failed_attempt < NTRIP_RETRY_MILLIS) {
@@ -197,14 +218,14 @@ bool Gnss::ntripConnect() {
   nmea_buffer_head = 0;
   nmea_buffer_tail = 0;
   nmea_need_sync = true;
-  ntripConnected = true;
+  bb::gnss.ntripConnected = true;
   logger.log_info("Ntrip connected.");
   return true;
 }
 
 void Gnss::ntripDisconnect() {
   ntripClient.stop();
-  ntripConnected = false;
+  bb::gnss.ntripConnected = false;
   logger.log_warn("Ntrip disconnected.");
 }
 
@@ -245,7 +266,7 @@ size_t Gnss::ntripReceiveRTCM() {
 }
 
 size_t Gnss::write(uint8_t incoming) {
-  if (!ntripConnected) {
+  if (!bb::gnss.ntripConnected) {
     return 1;
   }
   if (nmea_need_sync && incoming != '$') {
@@ -278,30 +299,35 @@ static void logData() {
   writer.printf("%4zu", bb::gnss.getNtripNmeaBytesSent());
   writer.print(" recv = ");
   writer.printf("%4zu", bb::gnss.getNtripRtcmByesReceived());
-  if (bb::gnss.hasGlobalPosition()) {
-    writer.print(", lat = ");
-    writer.print(bb::gnss.getLatitude(), 9);
-    writer.print(", lon = ");
-    writer.print(bb::gnss.getLongitude(), 9);
-    writer.print(", acc = ");
-    writer.print(bb::gnss.getHorizontalAccuracy(), 4);
-  }
-  if (bb::gnss.hasRelativePosition()) {
-    writer.print(", N = ");
-    writer.print(bb::gnss.getNorth(), 4);
-    writer.print("+-");
-    writer.print(bb::gnss.getNorthAccuracy(), 4);
-    writer.print(", E = ");
-    writer.print(bb::gnss.getEast(), 4);
-    writer.print("+-");
-    writer.print(bb::gnss.getEastAccuracy(), 4);
-  }
-  if (bb::gnss.hasHeading()) {
-    writer.print(", head = ");
-    writer.print(bb::gnss.getHeading(), 4);
-    writer.print("+-");
-    writer.print(bb::gnss.getHeadingAccuracy(), 4);
-  }
+  writer.print(", siv = ");
+  writer.printf("%2d", bb::gnss.getSatellites());
+
+  writer.print(", lat = ");
+  writer.print(bb::gnss.getLatitude(), 9);
+  writer.print(", lon = ");
+  writer.print(bb::gnss.getLongitude(), 9);
+  writer.print(", acc = ");
+  writer.print(bb::gnss.getHorizontalAccuracy(), 4);
+
+  writer.print(", N = ");
+  writer.print(bb::gnss.getNorth(), 4);
+  writer.print("+-");
+  writer.print(bb::gnss.getNorthAccuracy(), 4);
+  writer.print(", E = ");
+  writer.print(bb::gnss.getEast(), 4);
+  writer.print("+-");
+  writer.print(bb::gnss.getEastAccuracy(), 4);
+
+  writer.print(", head = ");
+  writer.print(bb::gnss.getHeading(), 5);
+  writer.print("+-");
+  writer.print(bb::gnss.getHeadingAccuracy(), 5);
+
+  writer.print(", speed = ");
+  writer.print(bb::gnss.getSpeed(), 3);
+  writer.print("+-");
+  writer.print(bb::gnss.getSpeedAccuracy(), 3);
+
   writer.print(", fix = ");
   writer.print(bb::gnss.hasFix());
   writer.print(", cor = ");

@@ -194,7 +194,7 @@ private:
   }
 
   String getImuStatusString() const {
-    if (bb::imu.isConnected()) {
+    if (bb::imu.isInitialized()) {
       return "ok";
     } else {
       return "failed to connect";

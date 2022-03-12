@@ -121,6 +121,7 @@ static void sendJson(AsyncWebServerRequest *request, int code, const JsonDocumen
         return;
     }
 
+    // TODO: serialize as msgpack if requested (by Accept header or ?format=msgpack), see serializeMsgPack
     String body;
     body.reserve(measureJson(doc));
     serializeJson(doc, body);
@@ -163,6 +164,74 @@ static void sendPayloadTooLarge(AsyncWebServerRequest *request) {
 
 static void sendUnsupportedMediaType(AsyncWebServerRequest *request) {
     sendGenericResponse(request, 415, "Unsupported Media Type");
+}
+
+static void sensorsHandler(AsyncWebServerRequest *request) {
+    static constexpr size_t JSON_SIZE =
+        JSON_OBJECT_SIZE(2) // root
+            + JSON_OBJECT_SIZE(4) // imu
+                + JSON_OBJECT_SIZE(4) // calibration
+            + JSON_OBJECT_SIZE(5) // gnss
+                + JSON_OBJECT_SIZE(4) // global
+                + JSON_OBJECT_SIZE(5) // relative
+                + JSON_OBJECT_SIZE(5) // motion
+    ;
+
+    StaticJsonDocument<JSON_SIZE> doc; // should maybe be a DynamicJsonDocument, if this grows too large
+    JsonObject root = doc.to<JsonObject>();
+
+    if (!bb::imu.isInitialized()) {
+        root["imu"] = nullptr;
+    } else {
+        JsonObject imu = root.createNestedObject("imu");
+        imu["heading"] = bb::imu.getHeading();
+        imu["roll"] = bb::imu.getRoll();
+        imu["pitch"] = bb::imu.getPitch();
+
+        {
+            JsonObject calibration = imu.createNestedObject("calibration");
+            calibration["system"] = bb::imu.getSystemCalibration();
+            calibration["gyroscope"] = bb::imu.getGyroscopeCalibration();
+            calibration["accelerometer"] = bb::imu.getAccelerometerCalibration();
+            calibration["magnetometer"] = bb::imu.getMagnetometerCalibration();
+        }
+    }
+
+    if (!bb::gnss.isInitialized()) {
+        root["gnss"] = nullptr;
+    } else {
+        JsonObject gnss = root.createNestedObject("gnss");
+        gnss["ntripConnected"] = bb::gnss.isNtripConnected();
+        gnss["satellites"] = bb::gnss.getSatellites();
+
+        {
+            JsonObject global = gnss.createNestedObject("global");
+            global["timestamp"] = bb::gnss.getGlobalTimestamp();
+            global["latitude"] = bb::gnss.getLatitude();
+            global["longitude"] = bb::gnss.getLongitude();
+            global["horizontalAccuracy"] = bb::gnss.getHorizontalAccuracy();
+        }
+
+        {
+            JsonObject relative = gnss.createNestedObject("relative");
+            relative["timestamp"] = bb::gnss.getRelativeTimestamp();
+            relative["north"] = bb::gnss.getNorth();
+            relative["east"] = bb::gnss.getEast();
+            relative["northAccuracy"] = bb::gnss.getNorthAccuracy();
+            relative["eastAccuracy"] = bb::gnss.getEastAccuracy();
+        }
+
+        {
+            JsonObject motion = gnss.createNestedObject("motion");
+            motion["timestamp"] = bb::gnss.getMotionTimestamp();
+            motion["heading"] = bb::gnss.getHeading();
+            motion["speed"] = bb::gnss.getSpeed();
+            motion["headingAccuracy"] = bb::gnss.getHeadingAccuracy();
+            motion["speedAccuracy"] = bb::gnss.getSpeedAccuracy();
+        }
+    }
+
+    sendJson(request, 200, doc);
 }
 
 static void poseHandler(AsyncWebServerRequest *request) {
@@ -250,6 +319,7 @@ static void actionQueuePatchHandler(AsyncWebServerRequest *request, const JsonDo
 
 void WebApi::begin() {
     server.onNotFound(sendNotFound);
+    server.addHandler(new GetHandler("/sensors", sensorsHandler));
     server.addHandler(new GetHandler("/pose", poseHandler));
     server.addHandler(new GetPatchHandler("/action_queue", actionQueueGetHandler, actionQueuePatchHandler));
     server.begin();
