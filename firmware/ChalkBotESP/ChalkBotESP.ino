@@ -37,6 +37,9 @@ static WebServer webServer;
 static WebApi webApi;
 static Behavior behavior;
 
+static Logger logger("main");
+
+constexpr unsigned long MAX_LOOP_DURATION = 500; // ms
 
 // The setup routine runs once when you press reset.
 void setup()
@@ -63,6 +66,7 @@ void setup()
 
 void loop()
 {
+  unsigned long loopBegin = millis();
   net.update();
   logServer.update();
   echoServer.update();
@@ -73,4 +77,13 @@ void loop()
   chalkbotMotorController.update();
   chalkbotMotorDriver.update();
   printDriver.update();
+  unsigned long loopEnd = millis();
+
+  unsigned long duration = loopEnd - loopBegin;
+  Logger::Verbosity verbosity = duration > MAX_LOOP_DURATION ? Logger::WARN : Logger::DEBUG;
+  Logger::Writer writer = logger.writer(verbosity);
+  writer.print("Loop took ");
+  writer.print(loopEnd - loopBegin);
+  writer.print("ms.");
+  writer.finish();
 }
