@@ -4,6 +4,7 @@ namespace bb {
     ImuBB imu;
     GnssBB gnss;
     OdometryBB odometry;
+    PoseFusionBB poseFusion;
     ChalkbotMotorDriverBB chalkbotMotorDriver;
     ChalkbotMotorControllerBB chalkbotMotorController;
     PrintDriverBB printDriver;

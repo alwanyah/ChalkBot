@@ -6,6 +6,7 @@
 #include "BB/ImuBB.h"
 #include "BB/GnssBB.h"
 #include "BB/OdometryBB.h"
+#include "BB/PoseFusionBB.h"
 #include "BB/ChalkbotMotorDriverBB.h"
 #include "BB/ChalkbotMotorControllerBB.h"
 #include "BB/PrintDriverBB.h"
@@ -17,6 +18,7 @@ namespace bb {
     extern ImuBB imu;
     extern GnssBB gnss;
     extern OdometryBB odometry;
+    extern PoseFusionBB poseFusion;
     extern ChalkbotMotorDriverBB chalkbotMotorDriver;
     extern ChalkbotMotorControllerBB chalkbotMotorController;
     extern PrintDriverBB printDriver;

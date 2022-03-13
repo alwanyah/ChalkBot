@@ -236,18 +236,34 @@ static void sensorsHandler(AsyncWebServerRequest *request) {
     sendJson(request, 200, doc);
 }
 
-static void poseHandler(AsyncWebServerRequest *request) {
-    static constexpr size_t JSON_SIZE = JSON_OBJECT_SIZE(3);
+static void poseGetHandler(AsyncWebServerRequest *request) {
+    static constexpr size_t JSON_SIZE = JSON_OBJECT_SIZE(4);
 
     StaticJsonDocument<JSON_SIZE> doc;
     JsonObject root = doc.to<JsonObject>();
 
-    Pose2D pose = bb::odometry.getRobotPose();
+    root["north"] = bb::poseFusion.getNorth();
+    root["east"] = bb::poseFusion.getEast();
+    root["heading"] = bb::poseFusion.getHeading();
+    root["useGnss"] = bb::poseFusion.isUsingGnss();
 
-    root["north"] = pose.translation.x / 1000.0;
-    root["east"] = pose.translation.y / -1000.0;
-    root["heading"] = -pose.rotation;
+    sendJson(request, 200, doc);
+}
 
+static void posePatchHandler(AsyncWebServerRequest *request, const JsonDocument &requestDoc) {
+    JsonObjectConst requestRoot = requestDoc.as<JsonObjectConst>();
+
+    JsonVariantConst useGnss = requestRoot["useGnss"];
+    if (!useGnss.isUnbound()) {
+        if (!useGnss.is<bool>()) {
+            sendBadRequest(request, "useGnss has wrong type (should be bool)");
+            return;
+        }
+        bb::poseFusion.setUseGnss(useGnss);
+    }
+
+    StaticJsonDocument<0> doc;
+    doc.to<JsonObject>();
     sendJson(request, 200, doc);
 }
 
@@ -322,7 +338,7 @@ static void actionQueuePatchHandler(AsyncWebServerRequest *request, const JsonDo
 void WebApi::begin() {
     server.onNotFound(sendNotFound);
     server.addHandler(new GetHandler("/sensors", sensorsHandler));
-    server.addHandler(new GetHandler("/pose", poseHandler));
+    server.addHandler(new GetPatchHandler("/pose", poseGetHandler, posePatchHandler));
     server.addHandler(new GetPatchHandler("/action_queue", actionQueueGetHandler, actionQueuePatchHandler));
     server.begin();
 }

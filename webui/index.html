@@ -17,6 +17,8 @@
             <legend>Pose</legend>
             <label for="poseAutoUpdate">Auto Update</label>
             <input id="poseAutoUpdate" type="checkbox" checked>
+            <label for="poseUseGnss">use GNSS</label>
+            <input id="poseUseGnss" type="checkbox">
             <span id="poseOutput">???</span>
         </fieldset>
         <fieldset>
@@ -25,6 +27,12 @@
             <input id="sensorsAutoUpdate" type="checkbox" checked>
             <p id="sensorsImu">???</p>
             <p id="sensorsGnss">???</p>
+        </fieldset>
+        <fieldset>
+            <legend>Actions</legend>
+            <label for="actionsAutoUpdate">Auto Update</label>
+            <input id="actionsAutoUpdate" type="checkbox" checked>
+            (TODO: Display stuff here)
         </fieldset>
         <fieldset>
             <legend>Drive</legend>
@@ -107,17 +115,44 @@
                 }
 
                 async sensors() {
-                    const response = await fetch(`//${this.address}/sensors`)
+                    const response = await fetch(`//${this.address}/sensors`, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                        },
+                    })
                     return await response.json()
                 }
 
                 async pose() {
-                    const response = await fetch(`//${this.address}/pose`)
+                    const response = await fetch(`//${this.address}/pose`, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                        },
+                    })
+                    return await response.json()
+                }
+
+                async patchPose(pose) {
+                    const response = await fetch(`//${this.address}/pose`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(pose),
+                    })
                     return await response.json()
                 }
 
                 async actions() {
-                    const response = await fetch(`//${this.address}/action_queue`)
+                    const response = await fetch(`//${this.address}/action_queue`, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                        },
+                    })
                     return await response.json()
                 }
 
@@ -158,10 +193,13 @@
 
                     poseAutoUpdate: document.getElementById('poseAutoUpdate'),
                     poseOutput: document.getElementById('poseOutput'),
+                    poseUseGnss: document.getElementById('poseUseGnss'),
 
                     sensorsAutoUpdate: document.getElementById('sensorsAutoUpdate'),
                     sensorsImu: document.getElementById('sensorsImu'),
                     sensorsGnss: document.getElementById('sensorsGnss'),
+
+                    actionsAutoUpdate: document.getElementById('actionsAutoUpdate'),
 
                     driveForward: document.getElementById('driveForward'),
                     driveClockwise: document.getElementById('driveClockwise'),
@@ -184,6 +222,10 @@
                     gamepadOutput: document.getElementById('gamepadOutput'),
                 }
 
+                #pose = null
+                #sensors = null
+                #actions = null
+
                 #canvasContext
                 #keys = {
                     up: false,
@@ -195,12 +237,14 @@
                 #gamepad
                 #gamepadTimestamp = 0
                 #gamepadNeedUpdate
+
                 chalkBot
 
                 constructor(chalkBot) {
                     this.#canvasContext = this.#elements.canvas.getContext('2d')
                     this.chalkBot = new ChalkBot(this.#elements.address.value)
                     this.#elements.addressSet.addEventListener('click', () => this.#updateAddress())
+                    this.#elements.poseUseGnss.addEventListener('click', () => this.#updateUseGnss())
                     this.#elements.driveGo.addEventListener('click', () => this.#drive())
                     this.#elements.gotoGo.addEventListener('click', () => this.#goto())
                     this.#elements.canvas.addEventListener('click', (event) => this.#gotoCanvas(event))
@@ -215,12 +259,24 @@
                 async #loop() {
                     try {
                         if (this.#elements.poseAutoUpdate.checked) {
-                            await this.#updatePose()
+                            this.#pose = await this.#updatePose()
+                        } else {
+                            this.#pose = null
                         }
 
                         if (this.#elements.sensorsAutoUpdate.checked) {
-                            await this.#updateSensors()
+                            this.#sensors = await this.#updateSensors()
+                        } else {
+                            this.#sensors = null
                         }
+
+                        if (this.#elements.actionsAutoUpdate.checked) {
+                            this.#actions = await this.#updateActions()
+                        } else {
+                            this.#actions = null
+                        }
+
+                        this.#redrawCanvas()
 
                         if (this.#keysNeedUpdate) {
                             await this.#keyDrive()
@@ -237,18 +293,54 @@
 
                 async #updatePose() {
                     const pose = await this.chalkBot.pose()
+                    this.#elements.poseUseGnss.checked = pose.useGnss
                     this.#elements.poseOutput.innerText = `north: ${pose.north.toFixed(3)}m, east: ${pose.east.toFixed(3)}m, heading: ${(pose.heading * 180 / Math.PI).toFixed(2)}°`
 
-                    const actionQueue = (await this.chalkBot.actions()).queue
+                    return pose
+                }
+
+                async #updateSensors() {
+                    const sensors = await this.chalkBot.sensors()
+                    const imu = sensors.imu
+                    const gnss = sensors.gnss
+
+                    if (imu === null) {
+                        this.#elements.sensorsImu.innerText = 'IMU not found'
+                    } else {
+                        this.#elements.sensorsImu.innerText = `heading: ${imu.heading.toFixed(2)}°, roll: ${imu.roll.toFixed(2)}°, pitch: ${imu.pitch.toFixed(2)}°\n`
+                            + `calib sys: ${imu.calibration.system}/3, gyro: ${imu.calibration.gyroscope}/3, accel: ${imu.calibration.accelerometer}/3, mag: ${imu.calibration.magnetometer}/3`
+                    }
+
+                    if (gnss === null) {
+                        this.#elements.sensorsGnss.innerText = 'GNSS not found'
+                    } else {
+                        this.#elements.sensorsGnss.innerText = `satellites in view: ${gnss.satellites}, ntrip: ${gnss.ntripConnected}\n`
+                            + `latitude: ${gnss.global.latitude.toFixed(7)}°N, longitude: ${gnss.global.longitude.toFixed(7)}°E, horizontal accuracy: ${gnss.global.horizontalAccuracy.toFixed(4)}m\n`
+                            + `north: ${gnss.relative.north.toFixed(4)}m (acc ${gnss.relative.northAccuracy.toFixed(4)}m), east: ${gnss.relative.east.toFixed(4)}m (acc ${gnss.relative.eastAccuracy.toFixed(4)}m)\n`
+                            + `heading: ${gnss.motion.heading.toFixed(2)}° (acc ${gnss.motion.headingAccuracy.toFixed(2)}°), north: ${gnss.motion.north.toFixed(3)}m/s, east: ${gnss.motion.east.toFixed(3)}m/s, speed: ${gnss.motion.speed.toFixed(3)}m/s (acc ${gnss.motion.speedAccuracy.toFixed(3)}m/s)`
+                    }
+
+                    return sensors
+                }
+
+                async #updateActions() {
+                    const actions = await this.chalkBot.actions()
+
+                    // TODO: show action queue and capacity
+
+                    return actions
+                }
+
+                #redrawCanvas() {
+                    const pose = this.#pose
+                    const sensors = this.#sensors
+                    const actionQueue = this.#actions?.queue ?? []
 
                     const width = this.#elements.canvas.width
                     const height = this.#elements.canvas.height
                     const northOffset = +this.#elements.canvasNorth.value
                     const eastOffset = +this.#elements.canvasEast.value
                     const zoom = +this.#elements.canvasZoom.value
-
-                    const robotX = width / 2 + (pose.east - eastOffset) * zoom
-                    const robotY = height / 2 - (pose.north - northOffset) * zoom
 
                     this.#canvasContext.clearRect(
                         0,
@@ -258,21 +350,44 @@
                     )
 
                     this.#canvasContext.beginPath()
-                    this.#canvasContext.arc(
-                        robotX,
-                        robotY,
-                        10,
-                        pose.heading - Math.PI / 4,
-                        pose.heading + Math.PI * 5 / 4,
-                    )
-                    this.#canvasContext.moveTo(
-                        robotX,
-                        robotY,
-                    )
-                    this.#canvasContext.lineTo(
-                        robotX + 15 * Math.sin(pose.heading),
-                        robotY - 15 * Math.cos(pose.heading),
-                    )
+
+                    if (pose !== null) {
+                        const robotX = width / 2 + (pose.east - eastOffset) * zoom
+                        const robotY = height / 2 - (pose.north - northOffset) * zoom
+
+                        this.#canvasContext.arc(
+                            robotX,
+                            robotY,
+                            10,
+                            pose.heading - Math.PI / 4,
+                            pose.heading + Math.PI * 5 / 4,
+                        )
+                        this.#canvasContext.moveTo(
+                            robotX,
+                            robotY,
+                        )
+                        this.#canvasContext.lineTo(
+                            robotX + 15 * Math.sin(pose.heading),
+                            robotY - 15 * Math.cos(pose.heading),
+                        )
+                    }
+
+                    if (sensors !== null) {
+                        const north = sensors.gnss.relative.north
+                        const northAccuracy = sensors.gnss.relative.northAccuracy
+                        const east = sensors.gnss.relative.east
+                        const eastAccuracy = sensors.gnss.relative.eastAccuracy
+
+                        for (let i = 1; i <= 4; ++i) {
+                            const rectX = width / 2 + (east - i * eastAccuracy - eastOffset) * zoom
+                            const rectY = height / 2 - (north + i * northAccuracy - northOffset) * zoom
+                            const rectWidth = i * eastAccuracy * zoom * 2
+                            const rectHeight = i * northAccuracy * zoom * 2
+
+                            this.#canvasContext.strokeRect(rectX, rectY, rectWidth, rectHeight)
+                        }
+                    }
+
                     if (actionQueue.length !== 0 && actionQueue[0].type === 'goto') {
                         const { north, east } = actionQueue[0].properties
 
@@ -297,27 +412,8 @@
                             targetY - 10,
                         )
                     }
+
                     this.#canvasContext.stroke()
-                }
-
-                async #updateSensors() {
-                    const { imu, gnss } = await this.chalkBot.sensors()
-
-                    if (imu === null) {
-                        this.#elements.sensorsImu.innerText = 'IMU not found'
-                    } else {
-                        this.#elements.sensorsImu.innerText = `heading: ${imu.heading.toFixed(2)}°, roll: ${imu.roll.toFixed(2)}°, pitch: ${imu.pitch.toFixed(2)}°\n`
-                            + `calib sys: ${imu.calibration.system}/3, gyro: ${imu.calibration.gyroscope}/3, accel: ${imu.calibration.accelerometer}/3, mag: ${imu.calibration.magnetometer}/3`
-                    }
-
-                    if (gnss === null) {
-                        this.#elements.sensorsGnss.innerText = 'GNSS not found'
-                    } else {
-                        this.#elements.sensorsGnss.innerText = `satellites in view: ${gnss.satellites}, ntrip: ${gnss.ntripConnected}\n`
-                            + `latitude: ${gnss.global.latitude.toFixed(7)}°N, longitude: ${gnss.global.longitude.toFixed(7)}°E, horizontal accuracy: ${gnss.global.horizontalAccuracy.toFixed(4)}m\n`
-                            + `north: ${gnss.relative.north.toFixed(4)}m (acc ${gnss.relative.northAccuracy.toFixed(4)}m), east: ${gnss.relative.east.toFixed(4)}m (acc ${gnss.relative.eastAccuracy.toFixed(4)}m)\n`
-                            + `heading: ${gnss.motion.heading.toFixed(2)}° (acc ${gnss.motion.headingAccuracy.toFixed(2)}°), north: ${gnss.motion.north.toFixed(3)}m/s, east: ${gnss.motion.east.toFixed(3)}m/s, speed: ${gnss.motion.speed.toFixed(3)}m/s (acc ${gnss.motion.speedAccuracy.toFixed(3)}m/s)`
-                    }
                 }
 
                 async #gamepadLoop() {
@@ -339,6 +435,12 @@
 
                 #updateAddress() {
                     this.chalkBot.address = this.#elements.address.value
+                }
+
+                async #updateUseGnss() {
+                    await this.chalkBot.patchPose({
+                        useGnss: this.#elements.poseUseGnss.checked
+                    })
                 }
 
                 async #drive() {

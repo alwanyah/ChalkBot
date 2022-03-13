@@ -5,6 +5,7 @@
 #include "src/modules/Imu.h"
 #include "src/modules/Gnss.h"
 #include "src/modules/Odometry.h"
+#include "src/modules/PoseFusion.h"
 #include "src/modules/Net.h"
 #include "src/modules/LogServer.h"
 #include "src/modules/EchoServer.h"
@@ -30,6 +31,7 @@ static ChalkbotMotorController chalkbotMotorController;
 static Imu imu_; // name conflicts with namespace imu from <Adafruit_BNO055.h>
 static Gnss gnss;
 static Odometry odometry;
+static PoseFusion poseFusion;
 static Net net;
 static LogServer logServer;
 static EchoServer echoServer;
@@ -73,6 +75,7 @@ void loop()
   imu_.update();
   gnss.update();
   odometry.update();
+  poseFusion.update();
   behavior.update();
   chalkbotMotorController.update();
   chalkbotMotorDriver.update();

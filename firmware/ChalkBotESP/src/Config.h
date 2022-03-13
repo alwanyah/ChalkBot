@@ -59,6 +59,14 @@ namespace config {
 
     }
 
+    namespace fusion {
+        // adjust our position if it is more than (factor * accuracy) away from GNSS position
+        constexpr double MAX_DEVIATION_FACTOR = 3.0;
+
+        // after adjusting our position it is (factor * accuracy) away from GNSS position
+        constexpr double ADJUSTMENT_TARGET_FACTOR = 1.0;
+    }
+
     namespace ntrip {
         constexpr char HOST[] = "www.sapos-be-ntrip.de";
         constexpr uint16_t PORT = 2101;
