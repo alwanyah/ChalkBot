@@ -26,10 +26,13 @@ class GnssBB {
   double downAccuracy = 0.0; // m
 
   unsigned long motionTimestamp = 0; // millis()
+  double northVelocity = 0.0; // m/s
+  double eastVelocity = 0.0; // m/s
+  double downVelocity = 0.0; // m/s
+  double speed = 0.0; // m/s (2D/ground speed)
+  double speedAccuracy = 0.0; // m/s
   double heading = 0.0; // deg
   double headingAccuracy = 0.0; // deg
-  double speed = 0.0; // m/s
-  double speedAccuracy = 0.0; // m/s
 
   int satellites = 0;
   bool fix = false;
@@ -112,12 +115,16 @@ public:
     return motionTimestamp;
   }
 
-  double getHeading() const {
-    return heading;
+  double getNorthVelocity() const {
+    return northVelocity;
   }
 
-  double getHeadingAccuracy() const {
-    return headingAccuracy;
+  double getEastVelocity() const {
+    return eastVelocity;
+  }
+
+  double getDownVelocity() const {
+    return downVelocity;
   }
 
   double getSpeed() const {
@@ -126,6 +133,14 @@ public:
 
   double getSpeedAccuracy() const {
     return speedAccuracy;
+  }
+
+  double getHeading() const {
+    return heading;
+  }
+
+  double getHeadingAccuracy() const {
+    return headingAccuracy;
   }
 
 

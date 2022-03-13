@@ -69,6 +69,12 @@ bool Gnss::begin() {
       continue;
     }
 
+    // // VELNED = velocity north/east/down
+    // if (!base.setAutoNAVVELNED(true)) {
+    //   logger.log_warn("Failed to enable non-blocking mode for VELNED.");
+    //   continue;
+    // }
+
     // save config to flash and BBR (battery backed RAM)
     if (!base.saveConfiguration()) {
       logger.log_warn("Failed to enable save configuration.");
@@ -109,23 +115,29 @@ bool Gnss::update() {
     bb::gnss.ntripRtcmByesReceived = 0;
   }
 
-  if (base.packetUBXNAVPVT != NULL && base.packetUBXNAVPVT->moduleQueried.moduleQueried1.all != 0) {
+  if (base.packetUBXNAVPVT != nullptr && base.packetUBXNAVPVT->moduleQueried.moduleQueried1.all != 0) {
     updatePVT(&base.packetUBXNAVPVT->data);
     base.flushPVT();
     hasUpdate = true;
   }
 
-  // if (base.packetUBXNAVHPPOSLLH != NULL && base.packetUBXNAVHPPOSLLH->moduleQueried.moduleQueried.all != 0) {
+  // if (base.packetUBXNAVHPPOSLLH != nullptr && base.packetUBXNAVHPPOSLLH->moduleQueried.moduleQueried.all != 0) {
   //   updateHPPOSLLH(&base.packetUBXNAVHPPOSLLH->data);
   //   base.flushHPPOSLLH();
   //   hasUpdate = true;
   // }
 
-  if (base.packetUBXNAVRELPOSNED != NULL && base.packetUBXNAVRELPOSNED->moduleQueried.moduleQueried.all != 0) {
+  if (base.packetUBXNAVRELPOSNED != nullptr && base.packetUBXNAVRELPOSNED->moduleQueried.moduleQueried.all != 0) {
     updateRELPOSNED(&base.packetUBXNAVRELPOSNED->data);
     base.flushNAVRELPOSNED();
     hasUpdate = true;
   }
+
+  // if (base.packetUBXNAVVELNED != nullptr && base.packetUBXNAVVELNED->moduleQueried.moduleQueried.all != 0) {
+  //   updateVELNED(&base.packetUBXNAVVELNED->data);
+  //   base.flushNAVRELPOSNED();
+  //   hasUpdate = true;
+  // }
 
   if (hasUpdate) {
     bb::gnss.updateDuration = millis() - updateBegin;
@@ -146,10 +158,13 @@ void Gnss::updatePVT(UBX_NAV_PVT_data_t *data) {
     bb::gnss.globalTimestamp = millis();
   }
 
-  bb::gnss.heading = data->headMot / 1e5;
-  bb::gnss.headingAccuracy = data->headAcc / 1e5;
+  bb::gnss.northVelocity = data->velN / 1e3;
+  bb::gnss.eastVelocity = data->velE / 1e3;
+  bb::gnss.downVelocity = data->velD / 1e3;
   bb::gnss.speed = data->gSpeed / 1e3;
   bb::gnss.speedAccuracy = data->sAcc / 1e3;
+  bb::gnss.heading = data->headMot / 1e5;
+  bb::gnss.headingAccuracy = data->headAcc / 1e5;
   bb::gnss.motionTimestamp = millis();
 
   bb::gnss.satellites = data->numSV;
@@ -181,6 +196,17 @@ void Gnss::updateRELPOSNED(UBX_NAV_RELPOSNED_data_t *data) {
 
   bb::gnss.fix = data->flags.bits.gnssFixOK;
   bb::gnss.correction = data->flags.bits.diffSoln;
+}
+
+void Gnss::updateVELNED(UBX_NAV_VELNED_data_t *data) {
+  bb::gnss.northVelocity = data->velN / 1e2;
+  bb::gnss.eastVelocity = data->velE / 1e2;
+  bb::gnss.downVelocity = data->velD / 1e2;
+  bb::gnss.speed = data->gSpeed / 1e2;
+  bb::gnss.speedAccuracy = data->sAcc / 1e2;
+  bb::gnss.heading = data->heading / 1e5;
+  bb::gnss.headingAccuracy = data->cAcc / 1e5;
+  bb::gnss.motionTimestamp = millis();
 }
 
 bool Gnss::ntripConnect() {

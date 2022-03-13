@@ -314,9 +314,9 @@
                         this.#elements.sensorsGnss.innerText = 'GNSS not found'
                     } else {
                         this.#elements.sensorsGnss.innerText = `satellites in view: ${gnss.satellites}, ntrip: ${gnss.ntripConnected}\n`
-                            + `latitude: ${gnss.global.latitude}°N, longitude: ${gnss.global.longitude}°E, horizontal accuracy: ${gnss.global.horizontalAccuracy}m\n`
-                            + `north: ${gnss.relative.north}m (acc ${gnss.relative.northAccuracy}m), east: ${gnss.relative.east}m (acc ${gnss.relative.eastAccuracy}m)\n`
-                            + `heading: ${gnss.motion.heading}° (acc ${gnss.motion.headingAccuracy}°), speed: ${gnss.motion.speed}m/s (acc ${gnss.motion.speedAccuracy}m/s)`
+                            + `latitude: ${gnss.global.latitude.toFixed(7)}°N, longitude: ${gnss.global.longitude.toFixed(7)}°E, horizontal accuracy: ${gnss.global.horizontalAccuracy.toFixed(4)}m\n`
+                            + `north: ${gnss.relative.north.toFixed(4)}m (acc ${gnss.relative.northAccuracy.toFixed(4)}m), east: ${gnss.relative.east.toFixed(4)}m (acc ${gnss.relative.eastAccuracy.toFixed(4)}m)\n`
+                            + `heading: ${gnss.motion.heading.toFixed(2)}° (acc ${gnss.motion.headingAccuracy.toFixed(2)}°), north: ${gnss.motion.north.toFixed(3)}m/s, east: ${gnss.motion.east.toFixed(3)}m/s, speed: ${gnss.motion.speed.toFixed(3)}m/s (acc ${gnss.motion.speedAccuracy.toFixed(3)}m/s)`
                     }
                 }
 

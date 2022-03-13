@@ -30,6 +30,7 @@ private:
   void updatePVT(UBX_NAV_PVT_data_t *data);
   void updateHPPOSLLH(UBX_NAV_HPPOSLLH_data_t *data);
   void updateRELPOSNED(UBX_NAV_RELPOSNED_data_t *data);
+  void updateVELNED(UBX_NAV_VELNED_data_t *data);
 
   bool ntripConnect();
   void ntripDisconnect();

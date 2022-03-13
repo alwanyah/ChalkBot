@@ -174,7 +174,7 @@ static void sensorsHandler(AsyncWebServerRequest *request) {
             + JSON_OBJECT_SIZE(5) // gnss
                 + JSON_OBJECT_SIZE(4) // global
                 + JSON_OBJECT_SIZE(5) // relative
-                + JSON_OBJECT_SIZE(5) // motion
+                + JSON_OBJECT_SIZE(7) // motion
     ;
 
     StaticJsonDocument<JSON_SIZE> doc; // should maybe be a DynamicJsonDocument, if this grows too large
@@ -224,10 +224,12 @@ static void sensorsHandler(AsyncWebServerRequest *request) {
         {
             JsonObject motion = gnss.createNestedObject("motion");
             motion["timestamp"] = bb::gnss.getMotionTimestamp();
-            motion["heading"] = bb::gnss.getHeading();
+            motion["north"] = bb::gnss.getNorthVelocity();
+            motion["east"] = bb::gnss.getEastVelocity();
             motion["speed"] = bb::gnss.getSpeed();
-            motion["headingAccuracy"] = bb::gnss.getHeadingAccuracy();
+            motion["heading"] = bb::gnss.getHeading();
             motion["speedAccuracy"] = bb::gnss.getSpeedAccuracy();
+            motion["headingAccuracy"] = bb::gnss.getHeadingAccuracy();
         }
     }
 
