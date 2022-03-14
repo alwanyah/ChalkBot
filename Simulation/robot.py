@@ -98,7 +98,7 @@ class Robot:
             self.next_action()
         else:
             self.v_pwm = properties["forward"] * 255
-            self.r_pwm = properties["clockwise"] * 255
+            self.r_pwm = properties["clockwise"] * -255
             self.p_pwm = properties["print"] * 255
             self.status_motion = "moving"
 
