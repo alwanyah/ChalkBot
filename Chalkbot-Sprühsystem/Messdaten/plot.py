@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 import os
 import sys
@@ -36,10 +37,15 @@ def get_Settings(file):
             "pumpe": data['Pump'], "voltage": data['Voltage'], "amper": data['Amper']}
 
 
+
 def plot(file, Description):
     with open(file, "r") as myfile:
         data = myfile.readlines()
-    title = data.pop(0)
+    title = data.pop(0).split("\n")[0].encode('unicode-escape')
+    title = str(title).replace("\\\\xc3\\\\xbc","ü")
+    title = str(title).replace("\\\\xfc","ü")
+    title = re.sub('\'$','',title)
+    title = re.sub('^b\'','',title)
     data.pop(len(data) - 1)
     try:
         data = np.loadtxt(data)
@@ -48,7 +54,7 @@ def plot(file, Description):
         return file
     fig, ax = plt.subplots()
     plt.rc('axes', titlesize=16)
-    fig.suptitle(title)
+    fig.suptitle(u"{title}".format(title=title))
     plt.rc('axes', titlesize=8)
     ax.set_title(Description['pumpe'] + " Pumpe", loc='left')
     ax.set_title(Description['voltage'] + ", " + Description['amper'], loc='right')
