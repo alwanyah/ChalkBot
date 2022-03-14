@@ -4,6 +4,8 @@ import os
 import sys
 import json
 
+from merge import *
+
 import re
 from matplotlib import pyplot as plt
 
@@ -36,6 +38,8 @@ def get_Settings(file):
     return {"x-label": DEFAULT_SETTINGS['x-label'], "y-label": data['Measuring'], "sensor": data['Sensor'],
             "pumpe": data['Pump'], "voltage": data['Voltage'], "amper": data['Amper']}
 
+def img_path(file):
+    return file.split("/")[0] + "/img/" + file.split("/")[1].split(".txt")[0] + ".png"
 
 
 def plot(file, Description):
@@ -63,8 +67,8 @@ def plot(file, Description):
     ax.plot(data)
     path = file.split("/")[0] + "/img"
     os.makedirs(path, exist_ok=True)
-    fig.savefig(file.split("/")[0] + "/img/" + file.split("/")[1].split(".txt")[0] + ".png", dpi=dpi)
-    print("Successfully created " + file.split("/")[0] + "/img/" + file.split("/")[1].split(".txt")[0] + ".png")
+    fig.savefig(img_path(file), dpi=dpi)
+    print("Successfully created " + img_path(file))
     plt.close(fig)
     return None
 
@@ -80,11 +84,15 @@ if __name__ == "__main__":
     list_files = get_file()
     failed_files = []
     for x in list_files:
+        img_files=[]
         for file in x:
             if file != x[0]:
+                img_files.append(img_path(file))
                 res = plot(file, get_Settings(x[0]))
                 if res != None:
                     failed_files.append(res)
+        pngname=str(x[0].split('/')[0])
+        mergepng(img_files,re.sub('^out','',pngname)+"_full.png")
 
     print("\n")
     print("Plotting falied for " + str(len(failed_files)) + " files: " + str(failed_files))
