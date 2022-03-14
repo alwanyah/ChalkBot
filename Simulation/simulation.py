@@ -9,7 +9,7 @@ from robot import Robot
 
 
 COMMAND_SERVER_PORT = 8000
-PANTHOGRAPH_SERVER_PORT = 8080
+PANTHOGRAPH_SERVER_PORT = 8081
 ROBOT_TICKS = 5  # amount of updates the robot will clalculate per frame
 
 
@@ -87,10 +87,16 @@ def main():
     server = CommandServerThread(app.robot, ("", COMMAND_SERVER_PORT))
     server.start()
 
-    def signal_handler(_sig, _frame):
+    def shutdown_callback():
         print("\nClosing Server!")
         server.stop()
-        tornado.ioloop.IOLoop.instance().stop()
+        tornado.ioloop.IOLoop.current().stop()
+
+    def signal_handler(_sig, _frame):
+        # don't intercept second ctrl+c if shutdown hangs
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+        tornado.ioloop.IOLoop.current().add_callback_from_signal(shutdown_callback)
 
     signal.signal(signal.SIGINT, signal_handler)
 

@@ -9,7 +9,7 @@
             <legend>Config</legend>
             <div>
                 <label for="address">Address</label>
-                <input id="address" type="text" value="192.168.0.231:8080">
+                <input id="address" type="text" value="127.0.0.1:8000">
                 <button id="addressSet">set</button>
             </div>
         </fieldset>
@@ -372,7 +372,7 @@
                         )
                     }
 
-                    if (sensors !== null) {
+                    if (sensors.gnss !== null) {
                         const north = sensors.gnss.relative.north
                         const northAccuracy = sensors.gnss.relative.northAccuracy
                         const east = sensors.gnss.relative.east
