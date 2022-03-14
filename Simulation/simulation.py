@@ -9,7 +9,7 @@ from robot import Robot
 
 
 COMMAND_SERVER_PORT = 8000
-PANTHOGRAPH_SERVER_PORT = 8081
+PANTHOGRAPH_SERVER_PORT = 8080
 ROBOT_TICKS = 5  # amount of updates the robot will clalculate per frame
 
 
