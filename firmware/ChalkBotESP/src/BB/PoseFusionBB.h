@@ -2,6 +2,7 @@
 #define POSE_FUSION_BB_H
 
 #include <Arduino.h>
+#include <vector>
 #include "../util/math/Pose2D.h"
 
 class PoseFusionBB {
@@ -9,6 +10,8 @@ class PoseFusionBB {
 
     Pose2D fusedPose;
     bool useGnss = false;
+
+    std::vector<Pose2D> samples;
 
 public:
     // translation north/west (mm), rotation counterclockwise (rad)
@@ -37,6 +40,10 @@ public:
 
     void setUseGnss(bool use) {
         useGnss = use;
+    }
+
+    const std::vector<Pose2D> getSamples() const {
+        return samples;
     }
 };
 

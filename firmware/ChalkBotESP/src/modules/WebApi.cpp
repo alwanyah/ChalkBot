@@ -156,6 +156,7 @@ static void sendNotFound(AsyncWebServerRequest *request) {
 
 static void sendMethodNotAllowed(AsyncWebServerRequest *request) {
     sendGenericResponse(request, 405, "Method Not Allowed");
+#include "../BB.h"
 }
 
 static void sendPayloadTooLarge(AsyncWebServerRequest *request) {
@@ -166,7 +167,7 @@ static void sendUnsupportedMediaType(AsyncWebServerRequest *request) {
     sendGenericResponse(request, 415, "Unsupported Media Type");
 }
 
-static void sensorsHandler(AsyncWebServerRequest *request) {
+static void sensorsGetHandler(AsyncWebServerRequest *request) {
     static constexpr size_t JSON_SIZE =
         JSON_OBJECT_SIZE(2) // root
             + JSON_OBJECT_SIZE(4) // imu
@@ -267,6 +268,25 @@ static void posePatchHandler(AsyncWebServerRequest *request, const JsonDocument 
     sendJson(request, 200, doc);
 }
 
+static void poseSamplesGetHandler(AsyncWebServerRequest *request) {
+    static constexpr size_t JSON_SIZE = JSON_OBJECT_SIZE(1)
+        + JSON_ARRAY_SIZE(config::fusion::SAMPLES_COUNT)
+        + config::fusion::SAMPLES_COUNT * JSON_OBJECT_SIZE(3);
+
+    StaticJsonDocument<JSON_SIZE> doc;
+    JsonObject root = doc.to<JsonObject>();
+
+    JsonArray samples = root.createNestedArray("samples");
+    for (const Pose2D &pose : bb::poseFusion.getSamples()) {
+        JsonObject sample = samples.createNestedObject();
+        sample["north"] = pose.translation.x / 1000.0;
+        sample["east"] = pose.translation.y / -1000.0;
+        sample["heading"] = -pose.rotation;
+    }
+
+    sendJson(request, 200, doc);
+}
+
 static void actionQueueGetHandler(AsyncWebServerRequest *request) {
     static constexpr size_t JSON_SIZE = JSON_OBJECT_SIZE(2)
         + JSON_ARRAY_SIZE(config::ACTION_QUEUE_CAPACITY)
@@ -337,8 +357,9 @@ static void actionQueuePatchHandler(AsyncWebServerRequest *request, const JsonDo
 
 void WebApi::begin() {
     server.onNotFound(sendNotFound);
-    server.addHandler(new GetHandler("/sensors", sensorsHandler));
+    server.addHandler(new GetHandler("/sensors", sensorsGetHandler));
     server.addHandler(new GetPatchHandler("/pose", poseGetHandler, posePatchHandler));
+    server.addHandler(new GetHandler("/pose/samples", poseSamplesGetHandler));
     server.addHandler(new GetPatchHandler("/action_queue", actionQueueGetHandler, actionQueuePatchHandler));
     server.begin();
 }

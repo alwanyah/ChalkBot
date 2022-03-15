@@ -17,6 +17,8 @@
             <legend>Pose</legend>
             <label for="poseAutoUpdate">Auto Update</label>
             <input id="poseAutoUpdate" type="checkbox" checked>
+            <label for="poseShowSamples">Show Samples</label>
+            <input id="poseShowSamples" type="checkbox">
             <label for="poseUseGnss">use GNSS</label>
             <input id="poseUseGnss" type="checkbox">
             <span id="poseOutput">???</span>
@@ -82,6 +84,7 @@
             <legend>Control</legend>
             <input id="keyControl" type="text" placeholder="key control">
             <span id="gamepadOutput">Gamepad off</span>
+            <button id="drawSquare">Draw Square</button>
         </fieldset>
         <script type="module">
             function DriveAction(forward, clockwise, print, duration) {
@@ -126,6 +129,16 @@
 
                 async pose() {
                     const response = await fetch(`//${this.address}/pose`, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                        },
+                    })
+                    return await response.json()
+                }
+
+                async poseSamples() {
+                    const response = await fetch(`//${this.address}/pose/samples`, {
                         method: 'GET',
                         headers: {
                             'Accept': 'application/json',
@@ -192,6 +205,7 @@
                     addressSet: document.getElementById('addressSet'),
 
                     poseAutoUpdate: document.getElementById('poseAutoUpdate'),
+                    poseShowSamples: document.getElementById('poseShowSamples'),
                     poseOutput: document.getElementById('poseOutput'),
                     poseUseGnss: document.getElementById('poseUseGnss'),
 
@@ -220,9 +234,11 @@
 
                     keyControl: document.getElementById('keyControl'),
                     gamepadOutput: document.getElementById('gamepadOutput'),
+                    drawSquare: document.getElementById('drawSquare'),
                 }
 
                 #pose = null
+                #poseSamples = null
                 #sensors = null
                 #actions = null
 
@@ -251,6 +267,7 @@
                     this.#elements.canvasCenter.addEventListener('click', () => this.#centerCanvasOnRobot())
                     this.#elements.keyControl.addEventListener('keydown', (event) => this.#keyDown(event))
                     this.#elements.keyControl.addEventListener('keyup', (event) => this.#keyUp(event))
+                    this.#elements.drawSquare.addEventListener('click', () => this.#drawSquare())
 
                     this.#loop()
                     this.#gamepadLoop()
@@ -262,6 +279,12 @@
                             this.#pose = await this.#updatePose()
                         } else {
                             this.#pose = null
+                        }
+
+                        if (this.#elements.poseShowSamples.checked) {
+                            this.#poseSamples = await this.chalkBot.poseSamples()
+                        } else {
+                            this.#poseSamples = null
                         }
 
                         if (this.#elements.sensorsAutoUpdate.checked) {
@@ -333,6 +356,7 @@
 
                 #redrawCanvas() {
                     const pose = this.#pose
+                    const poseSamples = this.#poseSamples
                     const sensors = this.#sensors
                     const actionQueue = this.#actions?.queue ?? []
 
@@ -349,6 +373,39 @@
                         height,
                     )
 
+                    this.#canvasContext.strokeStyle = '#F00'
+                    this.#canvasContext.beginPath()
+
+                    if (poseSamples !== null) {
+                        for (const sample of poseSamples.samples) {
+                            const sampleX = width / 2 + (sample.east - eastOffset) * zoom
+                            const sampleY = height / 2 - (sample.north - northOffset) * zoom
+
+                            this.#canvasContext.moveTo(
+                                sampleX,
+                                sampleY,
+                            )
+                            this.#canvasContext.arc(
+                                sampleX,
+                                sampleY,
+                                2,
+                                sample.heading - Math.PI / 4,
+                                sample.heading + Math.PI * 5 / 4,
+                            )
+                            this.#canvasContext.moveTo(
+                                sampleX,
+                                sampleY,
+                            )
+                            this.#canvasContext.lineTo(
+                                sampleX + 15 * Math.sin(sample.heading),
+                                sampleY - 15 * Math.cos(sample.heading),
+                            )
+                        }
+                    }
+
+                    this.#canvasContext.stroke()
+
+                    this.#canvasContext.strokeStyle = '#000'
                     this.#canvasContext.beginPath()
 
                     if (pose !== null) {
@@ -569,6 +626,36 @@
                     }
 
                     await this.#keyDrive()
+                }
+
+                async #drawSquare() {
+                    const DISTANCE = 5
+                    const pose = await this.chalkBot.pose()
+
+                    const actions = [
+                        new GotoAction(
+                            pose.north + Math.cos(pose.heading) * DISTANCE,
+                            pose.east + Math.sin(pose.heading) * DISTANCE,
+                            1
+                        ),
+                        new GotoAction(
+                            pose.north + Math.cos(pose.heading) * DISTANCE + Math.sin(pose.heading) * DISTANCE,
+                            pose.east + Math.sin(pose.heading) * DISTANCE + Math.cos(pose.heading) * DISTANCE,
+                            1
+                        ),
+                        new GotoAction(
+                            pose.north + Math.sin(pose.heading) * DISTANCE,
+                            pose.east + Math.cos(pose.heading) * DISTANCE,
+                            1
+                        ),
+                        new GotoAction(
+                            pose.north,
+                            pose.east,
+                            1
+                        )
+                    ]
+
+                    this.chalkBot.replaceActions(actions)
                 }
             }
 

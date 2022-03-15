@@ -1,6 +1,9 @@
 #include "PoseFusion.h"
 #include "../BB.h"
 #include "../Config.h"
+#include "../util/Logger.h"
+
+static Logger logger("fusion");
 
 // TODO: use filter
 
@@ -49,4 +52,13 @@ void PoseFusion::update()
     calculateMeanCurrentPose();
 
     lastOdometry = currentOdometry;
+    bb::poseFusion.samples = samples;
+
+    auto writer = logger.writer_debug();
+    writer.print(bb::poseFusion.fusedPose.translation.x);
+    writer.print(", ");
+    writer.print(bb::poseFusion.fusedPose.translation.y);
+    writer.print(", ");
+    writer.print(bb::poseFusion.fusedPose.rotation);
+    writer.finish();
 }

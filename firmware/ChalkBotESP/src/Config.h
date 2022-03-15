@@ -65,6 +65,8 @@ namespace config {
 
         // after adjusting our position it is (factor * accuracy) away from GNSS position
         constexpr double ADJUSTMENT_TARGET_FACTOR = 1.0;
+
+        constexpr size_t SAMPLES_COUNT = 10;
     }
 
     namespace ntrip {
