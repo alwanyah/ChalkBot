@@ -99,8 +99,11 @@ class ChalkBotSimulation(pantograph.PantographHandler):
 
 def main():
     print("Ctrl+C to close Server")
-    print("Press ESC to reset the canvas.")
+    print("Press ESC to reset canvas and chalkbot.")
+    print("----------------------------------")
+    factor = float(input("Set canvas size (default 1): "))
     CommandServer.init()
+    print("==================================")
     app = pantograph.SimplePantographApplication(ChalkBotSimulation)
     #print(app.constr_args)
     app.run()
@@ -108,8 +111,6 @@ def main():
 
 
 if __name__ == '__main__':
-
-    factor = float(input("Size of Simulation canvas: "))
     main()
 
 

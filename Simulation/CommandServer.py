@@ -16,6 +16,7 @@ import json
 import numpy as np
 import Robot
 import webbrowser
+from sys import stdout
 
 PORT = 8000
 
@@ -48,16 +49,9 @@ def init():
     global server
     ThreadedTCPServer.allow_reuse_address = True
     server = ThreadedTCPServer(("", PORT), SimulationHandler)
+    server.logging = False
     threading.Thread(target=server.serve_forever).start()
-    webbrowser.open('localhost:8080', new=2)
-def log(x):
-    if (x > 0):
-        return math.log(x)
-    elif (x < 0):
-        return -1 * math.log(-1 * x)
-    else:
-        return 0
-    
+    webbrowser.open('localhost:8080', new=2)   
 
 def set_drive(parameters):
 
@@ -94,7 +88,9 @@ def close():
     server.server_close()
 
 class SimulationHandler(SimpleHTTPRequestHandler):
-
+    def log_message(self, format, *args):
+        if self.server.logging:
+            SimpleHTTPRequestHandler.log_message(self, format, *args)
     def do_POST(self):
         #print("executing do_POST")
         # get the length of the data to read
