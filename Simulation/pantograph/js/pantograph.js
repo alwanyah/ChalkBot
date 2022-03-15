@@ -16,6 +16,10 @@ pantograph.hiddenContext = pantograph.hiddenCanvas.getContext("2d");
 //this is for saving the coords of the chalkbotdrawing:
 var chalk_drawing = [];
 
+pantograph.reset = function(ctx) {
+	chalk_drawing = [];
+}
+
 pantograph.saveChalk = function(ctx, circle) {
 	chalk_drawing.push(circle);
 }
@@ -195,7 +199,8 @@ pantograph.shapeToFunc = {
 	polygon: pantograph.drawPolygon,
 	compound: pantograph.drawCompound,
 	brush: pantograph.drawBrush,
-	save: pantograph.saveChalk
+	save: pantograph.saveChalk,
+	reset: pantograph.reset
 }
 
 pantograph.socket.onopen = function(e) {

@@ -20,6 +20,8 @@ dots = []
 radius = 10/factor
 offset = [30/factor, 20/factor]             # dont move the paint, move the robot image
 
+reset = False
+
 t = 0             # Simulationtime in Milliseconds
 with open("config.json", "r") as jsonFile:
         data = json.load(jsonFile)
@@ -49,7 +51,11 @@ class ChalkBot(object):
 
     def update(self, canvas):
 
-        global t, dots
+        global t, dots, reset
+
+        if (reset):
+            canvas.draw("reset")
+            reset = False
 
         for i in range(robot_ticks):
             robot.update(t)
@@ -81,12 +87,15 @@ class ChalkBotSimulation(pantograph.PantographHandler):
         self.chalkbot.update(self)
 
     def on_key_down(self, event):
-        global dots, robot, t
+        global dots, robot, t, reset
         if event.key_code == 27:
+            reset = True
             t = 0
             dots = []
             robot = Robot.Robot()
             CommandServer.reset()
+
+
 
 def main():
     print("Ctrl+C to close Server")
