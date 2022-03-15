@@ -26,7 +26,7 @@ public:
       weights.resize(10);
       
       resetWeights();
-      applySimpleNoise(300, Math::pi);
+      applySimpleNoise(300, Math::pi2);
     }
     
     void resetWeights() {
