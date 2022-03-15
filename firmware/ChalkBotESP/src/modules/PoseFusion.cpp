@@ -12,26 +12,31 @@ void PoseFusion::update()
     //bb::poseFusion.fusedPose += odomertyDelta;
     
     updateByOdometry(odomertyDelta);
-
+    
     const unsigned long currentGnssTimestamp = bb::gnss.getRelativeTimestamp();
     if (bb::poseFusion.useGnss && currentGnssTimestamp != lastGnssTimestamp) 
     {
+        resetWeights();
+      
         const double gnssNorth =  bb::gnss.getNorth() * 1000.0;
         const double gnssEast  = -bb::gnss.getEast()  * 1000.0;
         
-        const double gnssNorthAccuracy = bb::gnss.getNorthAccuracy();
-        const double gnssEastAccuracy = bb::gnss.getEastAccuracy();
-
-        double poseNorth = bb::poseFusion.getNorth();
-        double poseEast = bb::poseFusion.getEast();
-
+        Vector2d gps(gnssNorth, gnssEast);
+        calculateWeightsByGPS(gps);
         
+        simpleResample(); 
+        
+        //const double gnssNorthAccuracy = bb::gnss.getNorthAccuracy();
+        //const double gnssEastAccuracy = bb::gnss.getEastAccuracy();
 
         //bb::poseFusion.fusedPose.translation.x = poseNorth;
         //bb::poseFusion.fusedPose.translation.y = poseEast;
 
         lastGnssTimestamp = currentGnssTimestamp;
     }
+    
+    //calculateCurrentPose();
+    calculateMeanCurrentPose();
 
     lastOdometry = currentOdometry;
 }
