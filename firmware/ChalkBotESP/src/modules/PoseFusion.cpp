@@ -1,9 +1,6 @@
 #include "PoseFusion.h"
 #include "../BB.h"
 #include "../Config.h"
-#include "../util/Logger.h"
-
-static Logger logger("fusion");
 
 // TODO: use filter
 
@@ -17,22 +14,31 @@ void PoseFusion::update()
     const unsigned long currentGnssTimestamp = bb::gnss.getRelativeTimestamp();
     if (currentGnssTimestamp != lastGnssTimestamp) 
     {
-        resetWeights();
-      
         const double gnssNorth =  bb::gnss.getNorth() * 1000.0;
         const double gnssEast  = -bb::gnss.getEast()  * 1000.0;
         
         Vector2d gps(gnssNorth, gnssEast);
         
-        if(!bb::poseFusion.useGnss) {
+        if(!bb::poseFusion.useGnss) 
+        {
           gps_origin = gps;
-        } else {
+        } 
+        else // use gps 
+        {
           gps -= gps_origin;
+
+          if(!init_localization) {
+            init(bb::poseFusion.fusedPose);
+            resetWeights();
+            applySimpleNoise(300, Math::pi2);
+            init_localization = true;
+          }
+         
+          resetWeights();
+          calculateWeightsByGPS(gps);
+        
+          simpleResample();
         }
-        
-        calculateWeightsByGPS(gps);
-        
-        simpleResample(); 
         
         //const double gnssNorthAccuracy = bb::gnss.getNorthAccuracy();
         //const double gnssEastAccuracy = bb::gnss.getEastAccuracy();
@@ -47,18 +53,10 @@ void PoseFusion::update()
     
     if(!bb::poseFusion.useGnss) {
       init(bb::poseFusion.fusedPose);
+      init_localization = false;
     }
     
     calculateMeanCurrentPose();
 
     lastOdometry = currentOdometry;
-    bb::poseFusion.samples = samples;
-
-    auto writer = logger.writer_debug();
-    writer.print(bb::poseFusion.fusedPose.translation.x);
-    writer.print(", ");
-    writer.print(bb::poseFusion.fusedPose.translation.y);
-    writer.print(", ");
-    writer.print(bb::poseFusion.fusedPose.rotation);
-    writer.finish();
 }

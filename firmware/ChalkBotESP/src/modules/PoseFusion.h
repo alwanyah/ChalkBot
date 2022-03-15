@@ -20,6 +20,8 @@ private:
 
     Vector2d gps_origin;
 
+    bool init_localization = false;
+    
 public:
     
     PoseFusion()
