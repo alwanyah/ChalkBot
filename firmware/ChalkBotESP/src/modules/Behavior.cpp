@@ -101,7 +101,7 @@ void Behavior::goto_(const ActionGoto &action, unsigned long elapsed) {
     // FIXME: move to Config.h
     float maxRotationPWM = 64.0f;
 
-    Pose2D robotPose = bb::odometry.getRobotPose();
+    Pose2D robotPose = bb::poseFusion.getFusedPose();
 
     // transform the target from global coordinates into local coordinates of the robot
     Vector2d targetPointLocal = robotPose / target;
@@ -217,7 +217,7 @@ void Behavior::legacyBehavior() {
             // FIXME: move to Config.h
             float maxRotationPWM = 64.0f;
 
-            Pose2D robotPose = bb::odometry.getRobotPose();
+            Pose2D robotPose = bb::poseFusion.getFusedPose();
 
             // transform the target from global coordinates into local coordinates of the robot
             Vector2d targetPointLocal = robotPose / request.target;
