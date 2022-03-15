@@ -25,6 +25,7 @@ void PoseFusion::update()
         if(!bb::poseFusion.useGnss) 
         {
           gps_origin = gps;
+          init_localization = false;
         } 
         else // use gps 
         {
