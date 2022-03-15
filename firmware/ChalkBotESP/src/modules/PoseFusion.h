@@ -18,6 +18,8 @@ private:
     std::vector<Pose2D> samples;
     std::vector<double> weights;
 
+    Vector2d gps_origin;
+
 public:
     
     PoseFusion()

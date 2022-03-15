@@ -9,12 +9,10 @@ void PoseFusion::update()
     const Pose2D currentOdometry = bb::odometry.getRobotPose();
     const Pose2D odomertyDelta = currentOdometry - lastOdometry;
 
-    //bb::poseFusion.fusedPose += odomertyDelta;
-    
     updateByOdometry(odomertyDelta);
     
     const unsigned long currentGnssTimestamp = bb::gnss.getRelativeTimestamp();
-    if (bb::poseFusion.useGnss && currentGnssTimestamp != lastGnssTimestamp) 
+    if (currentGnssTimestamp != lastGnssTimestamp) 
     {
         resetWeights();
       
@@ -22,6 +20,13 @@ void PoseFusion::update()
         const double gnssEast  = -bb::gnss.getEast()  * 1000.0;
         
         Vector2d gps(gnssNorth, gnssEast);
+        
+        if(!bb::poseFusion.useGnss) {
+          gps_origin = gps;
+        } else {
+          gps -= gps_origin;
+        }
+        
         calculateWeightsByGPS(gps);
         
         simpleResample(); 
@@ -36,6 +41,11 @@ void PoseFusion::update()
     }
     
     //calculateCurrentPose();
+    
+    if(!bb::poseFusion.useGnss) {
+      init(bb::poseFusion.fusedPose);
+    }
+    
     calculateMeanCurrentPose();
 
     lastOdometry = currentOdometry;
