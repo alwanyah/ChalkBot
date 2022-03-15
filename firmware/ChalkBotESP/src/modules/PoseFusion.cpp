@@ -54,13 +54,12 @@ void PoseFusion::update()
     
     //calculateCurrentPose();
     
-    if(!bb::poseFusion.useGnss) {
-      init(bb::poseFusion.fusedPose);
-      init_localization = false;
+    if(bb::poseFusion.useGnss) {
+      calculateMeanCurrentPose();
+    } else {
+      bb::poseFusion.fusedPose += odomertyDelta;
     }
     
-    calculateMeanCurrentPose();
-
     lastOdometry = currentOdometry;
     
     // copy samples to the bb 
