@@ -27,7 +27,7 @@ timeOfLastCommand = t
 driveRequest = [0,0,0,0]
 status_motion = "stopped"
 goto_point = [0,0,0]
-server = None 
+server = None
 
 pose = [0,0]
 orientation = 0
@@ -51,7 +51,7 @@ def init():
     server = ThreadedTCPServer(("", PORT), SimulationHandler)
     server.logging = False
     threading.Thread(target=server.serve_forever).start()
-    # webbrowser.open('localhost:8080', new=2)   
+    # webbrowser.open('localhost:8080', new=2)
 
 def set_drive(parameters):
 
@@ -61,7 +61,7 @@ def set_drive(parameters):
     driveRequest[0] = float(list[0][2:])
     if abs(driveRequest[0]) > 255:
         driveRequest[0] = 255 * driveRequest[0]/abs(driveRequest[0])
-    
+
     driveRequest[1] = float(list[1])
     if abs(driveRequest[1]) > 255:
         driveRequest[1] = 255 * driveRequest[1]/abs(driveRequest[1])
@@ -81,7 +81,7 @@ def goto(parameters):
     goto_point[2] = float(list[2][:len(list[2])-1])
     lastCommand = "goto"
     timeOfLastCommand = t
-    
+
 
 def close():
     server.shutdown()

@@ -10,7 +10,7 @@ if __name__ == "__main__":
         chalkbot = ChalkBotHTTPClient("10.0.4.99")
     elif var == "1":
         chalkbot = ChalkBotHTTPClient("127.0.0.1:8000")
-    else: 
+    else:
         print("Invalid input. Type 0 or 1.")
         exit(1)
 
@@ -23,12 +23,11 @@ if __name__ == "__main__":
             coordinates['coords'][j][i][0] *= 10
             coordinates['coords'][j][i][1] *= 10
 
-    for j in range(0, len(coordinates['coords'])-1):
+    for j in range(0, len(coordinates['coords'])):
         for i in range(0, len(coordinates['coords'][j])):
             # need to wait until goto is done drawing
-            while (True):
-                if (chalkbot.status() == "stopped"):
-                    break;
+            while (chalkbot.status() == "moving"):
+                ...
 
             # print("Going to x:", coordinates['coords'][0][i][0], ", y:", coordinates['coords'][0][i][1])
             # move to first coordinate without drawing, draw the rest
