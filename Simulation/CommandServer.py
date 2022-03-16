@@ -51,7 +51,7 @@ def init():
     server = ThreadedTCPServer(("", PORT), SimulationHandler)
     server.logging = False
     threading.Thread(target=server.serve_forever).start()
-    webbrowser.open('localhost:8080', new=2)   
+    # webbrowser.open('localhost:8080', new=2)   
 
 def set_drive(parameters):
 

@@ -27,8 +27,8 @@ class MyHandler(BaseHTTPRequestHandler):
         print(data)
 
         print(self.path)
-        
-         
+
+
         if self.path == "/status_motion":
             response = "stopped"
         elif self.path == "/status_imu":
@@ -39,14 +39,14 @@ class MyHandler(BaseHTTPRequestHandler):
             response = "1000;300;1.73"
         else:
             response = "unknown command: " + self.path
-        
+
         print(response)
-        
+
         # header
         self.send_response(200)
         self.send_header("Content-type", "text/html")
         self.end_headers()
-        
+
         # response
         self.wfile.write(str(response).encode("utf8"))
 
@@ -56,7 +56,7 @@ class ChalkbotHandler(SimpleHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-type", "text/html")
         self.end_headers()
-        
+
     '''
     def do_GET(self):
         #super().do_GET()
@@ -71,41 +71,43 @@ class ChalkbotHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         try:
-          # get the length of the data to read
-          length = int(self.headers.get('content-length'))
-          data = self.rfile.read(length)
+            # get the length of the data to read
+            length = int(self.headers.get('content-length'))
+            data = self.rfile.read(length)
 
-          print(self.requestline)
-          print(self.path)
-          print(self.command)
+            print(self.requestline)
+            print(self.path)
+            print(self.command)
 
-          print(self.headers.keys())
+            print(self.headers.keys())
 
-          print(length)
-          print(data)
-          # parse json data
-          msg = json.loads(data)
-          print(msg)
+            print(length)
+            print(data)
+            # parse json data
+            msg = json.loads(data)
 
-          # do something with the data
-          if (msg['file'] == True):
-            del msg['file']
-            file = open("coords.json","w")
-            file.write(json.dumps(msg))
-            file.close()
+            # do something with the data
+            if (msg['file'] == True):
+                del msg['file']
+                file = open("coords.json","w")
+                file.write(json.dumps(msg))
+                file.close()
+            else:
+                del msg['file']
+            print(msg)
 
-          result = "DONE!"
+            result = "DONE!"
 
-          # send a response
-          self._set_headers()
-          self.wfile.write(str(result).encode("utf8"))
+            # send a response
+            self._set_headers()
+            self.wfile.write(str(result).encode("utf8"))
 
         except Exception:
-          self._set_headers()
-          trace = traceback.format_exc()
-          print(trace)
-          self.wfile.write(str(trace).encode("utf8"))
-          
+            self._set_headers()
+            trace = traceback.format_exc()
+            print(trace)
+            self.wfile.write(str(trace).encode("utf8"))
+
     def log_message(self, format, *args):
         return
 
@@ -113,14 +115,13 @@ class ChalkbotHandler(SimpleHTTPRequestHandler):
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     pass
 
-          
+
 if __name__ == "__main__":
 
   ThreadedTCPServer.allow_reuse_address = True
   server = ThreadedTCPServer(("", PORT), ChalkbotHandler)
   #server = ThreadedTCPServer(("", PORT), MyHandler)
-  
+
   print("Serving at port: {}".format(PORT))
   server.serve_forever()
   print("Stopped serving at port: {}".format(PORT))
-  
