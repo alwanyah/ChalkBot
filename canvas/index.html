@@ -181,9 +181,11 @@
 
                     canvas.onmouseup = canvas.onmouseout = canvas.ontouchend = function (e)
                     {
+                        console.log("push trajectory");
+                        
                         canvas.onmousemove = canvas.ontouchmove = null;
 
-                        if (dds.length > 1)
+                        if (dds.length > 1 && xys.length > 1)
                         {
                             var ts = [];
                             for (var i in dds) {
@@ -201,6 +203,8 @@
                             // store the trajectory
                             strokes.push(xys);
                             trajectory = ss;
+                            
+                            xys = []
                         }
                     };
 
