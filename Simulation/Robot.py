@@ -33,7 +33,7 @@ class Robot(object):
         self.v_pwm = 0
         self.p_pwm = 0
 
-
+        self.status_motion = "stopped"
 
     def setVelocitySmooth(self, v, r):
         self.v_pwm = 0
@@ -50,7 +50,7 @@ class Robot(object):
             self.v_pwm = CommandServer.driveRequest[0]
             self.r_pwm = CommandServer.driveRequest[1]
             self.p_pwm = CommandServer.driveRequest[2] > 0
-            CommandServer.status_motion = "moving"
+            self.status_motion = "moving"
 
         elif (CommandServer.lastCommand=="goto"):
 
@@ -77,18 +77,18 @@ class Robot(object):
                     self.r_pwm = 0
                     if distance/maxDistanceError < 2:
                         self.v_pwm = self.v_pwm /2
-                CommandServer.status_motion = "moving"
+                self.status_motion = "moving"
 
 
             else:
                 self.p_pwm = 0
                 self.setVelocitySmooth(0,0)
-                CommandServer.status_motion = "stopped"
+                self.status_motion = "stopped"
 
         else:
             self.p_pwm = 0
             self.setVelocitySmooth(0,0)
-            CommandServer.status_motion = "stopped"
+            self.status_motion = "stopped"
 
         #behavior
 
@@ -111,6 +111,7 @@ class Robot(object):
 
         CommandServer.pose = [self.x, self.y]
         CommandServer.orientation = self.theta
+        CommandServer.status_motion = self.status_motion
         #CommandServer.t = self.t
 
 

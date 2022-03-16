@@ -22,16 +22,25 @@ offset = [30/factor, 20/factor]             # dont move the paint, move the robo
 
 reset = False
 
-t = 0             # Simulationtime in Milliseconds
-with open("config.json", "r") as jsonFile:
-        data = json.load(jsonFile)
+quick = False
 
-updatePeriod = data["timer_interval"] # milliseconds
+t = 0             # Simulationtime in Milliseconds
+
+updatePeriod = 30
 #print(updatePeriod)
 
 robot_ticks = 5   # amount of updates the robot will clalculate per frame
 
 def signal_handler(sig, frame):
+    if (quick):
+        with open("config.json", "r") as jsonFile:
+            data = json.load(jsonFile)
+
+        data["timer_interval"] = updatePeriod
+
+        with open("config.json", "w") as jsonFile:
+            json.dump(data, jsonFile)
+
     CommandServer.close()
     print("\nClosing Server!")
     sys.exit()
@@ -73,8 +82,10 @@ class ChalkBot(object):
         self.shape.y = robot.y/(10*factor) - offset[1]
 
         self.shape.rotate(robot.theta)
-        canvas.draw("brush")
-        self.shape.draw(canvas)
+
+        if (not quick or robot.status_motion=="stopped"):
+            canvas.draw("brush")
+            self.shape.draw(canvas)
 
 class ChalkBotSimulation(pantograph.PantographHandler):
     def setup(self):
@@ -98,14 +109,28 @@ class ChalkBotSimulation(pantograph.PantographHandler):
 
 
 def main():
-    global factor, radius, offset
+    global factor, radius, offset, updatePeriod
     print("Ctrl+C to close Server")
     print("Press ESC to reset canvas and chalkbot.")
     print("----------------------------------")
     factor = float(input("Set canvas size (default 1): "))
-    
+    quick = float(input("Simulationmode normal : 0          quickmode : 1\n"))==1
     radius = 10/factor
     offset = [30/factor, 20/factor]
+
+
+    with open("config.json", "r") as jsonFile:
+        data = json.load(jsonFile)
+
+        updatePeriod = data["timer_interval"] # milliseconds
+
+        if (quick):
+            data["timer_interval"] = 1.0
+
+            with open("config.json", "w") as jsonFile:
+                json.dump(data, jsonFile)
+
+
 
 
     CommandServer.init()
