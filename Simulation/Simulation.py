@@ -98,6 +98,7 @@ class ChalkBotSimulation(pantograph.PantographHandler):
 
 
 def main():
+    global factor
     print("Ctrl+C to close Server")
     print("Press ESC to reset canvas and chalkbot.")
     print("----------------------------------")

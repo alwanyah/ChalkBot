@@ -13,7 +13,7 @@ import numpy as np
 #import traceback
 #import json
 
-# 
+#
 # Multipliers: multiply with the corresponding pwm to calculate the movement.
 
 v_max = 5   # m/second, which equals 18km/h
@@ -60,11 +60,11 @@ class Robot(object):
             distance = math.sqrt(xrel*xrel + yrel*yrel)
             angle = -np.arctan2(yrel, xrel)
             self.p_pwm = CommandServer.goto_point[2]
-            
+
             maxDistanceError = timeDelta*2
             maxAngleError = timeDelta/1000
 
-            if distance > maxDistanceError:                 # 
+            if distance > maxDistanceError:                 #
 
                 if abs(angle) > maxAngleError:
                     self.v_pwm = 0
@@ -94,7 +94,7 @@ class Robot(object):
 
         # We assume a max velocity of the original ChalkBot of 5 m/s = 5 mm/ms
         # To get the Velocity, we also normalize the pwm.
-        
+
         velocity = self.v_pwm * v_factor
 
         xvel = math.cos(self.theta) * velocity
