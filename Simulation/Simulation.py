@@ -61,7 +61,7 @@ class ChalkBot(object):
             robot.update(t)
             t += updatePeriod/robot_ticks
             if robot.p_pwm:
-                canvas.draw("save", x=robot.x/10*factor, y=robot.y/10*factor, radius=radius, lineColor="#f00")
+                canvas.draw("save", x=robot.x/(10*factor), y=robot.y/(10*factor), radius=radius, lineColor="#f00")
             CommandServer.t = t
         
         #for dot in dots:
@@ -98,10 +98,16 @@ class ChalkBotSimulation(pantograph.PantographHandler):
 
 
 def main():
+    global factor, radius, offset
     print("Ctrl+C to close Server")
     print("Press ESC to reset canvas and chalkbot.")
     print("----------------------------------")
     factor = float(input("Set canvas size (default 1): "))
+    
+    radius = 10/factor
+    offset = [30/factor, 20/factor]
+
+
     CommandServer.init()
     print("==================================")
     app = pantograph.SimplePantographApplication(ChalkBotSimulation)
