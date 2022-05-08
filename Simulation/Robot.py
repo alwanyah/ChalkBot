@@ -66,17 +66,21 @@ class Robot(object):
 
             if distance > maxDistanceError:                 #
 
+                # turn on the spot
                 if abs(angle) > maxAngleError:
                     self.v_pwm = 0
                     self.r_pwm = angle/abs(angle) * 255
                     if angle/maxAngleError < 2:
                         self.r_pwm = self.r_pwm/2
+                    # don't print when turning on the spot
+                    self.p_pwm = 0
 
                 else:
                     self.v_pwm = 255   #  255 is the max pwm
                     self.r_pwm = 0
                     if distance/maxDistanceError < 2:
                         self.v_pwm = self.v_pwm /2
+                        
                 self.status_motion = "moving"
 
 
