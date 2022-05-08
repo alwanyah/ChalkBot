@@ -7,25 +7,56 @@ var pantograph = {};
 pantograph.socket = new WebSocket(ws_url);
 
 pantograph.context = canvas.getContext("2d");
+
+// this is for double buffering
 pantograph.hiddenCanvas = document.createElement("canvas");
 pantograph.hiddenCanvas.width = canvas.width;
 pantograph.hiddenCanvas.height = canvas.height;
 pantograph.hiddenContext = pantograph.hiddenCanvas.getContext("2d");
 
+// this is for drawing with chalk
+pantograph.chalkCanvas = document.createElement("canvas");
+pantograph.chalkCanvas.width = canvas.width;
+pantograph.chalkCanvas.height = canvas.height;
+pantograph.chalkContext = pantograph.chalkCanvas.getContext("2d");
 
 //this is for saving the coords of the chalkbotdrawing:
 var chalk_drawing = [];
 
 pantograph.reset = function(ctx) {
 	chalk_drawing = [];
+  
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+var density = 40;
+function getRandomFloat(min, max) {
+  return Math.random() * (max - min) + min;
 }
 
 pantograph.saveChalk = function(ctx, circle) {
-	chalk_drawing.push(circle);
+	//chalk_drawing.push(circle);
+  
+  //pantograph.drawCircle(pantograph.chalkContext, circle);
+  ctx = pantograph.chalkContext;
+  
+  ctx.lineJoin = ctx.lineCap = 'round';
+  
+  for (var i = density; i--; ) {
+    var angle = getRandomFloat(0, Math.PI * 2);
+    var radius = getRandomFloat(0, circle.radius);
+    ctx.globalAlpha = Math.random();
+    ctx.fillRect(
+      circle.x + radius * Math.cos(angle),
+      circle.y + radius * Math.sin(angle), 
+      getRandomFloat(1, 2), getRandomFloat(1, 2));
+  }
+  
 }
 
 pantograph.drawBrush = function(ctx) {
-
+  ctx.drawImage(pantograph.chalkCanvas, 0, 0);
+  /*
 	for (var i = 0; i < chalk_drawing.length; i+=1) {
 		var circle = chalk_drawing[i];
 		console.log(circle);
@@ -40,6 +71,7 @@ pantograph.drawBrush = function(ctx) {
 			ctx.fill();
 		}
 	}
+  */
 }
 
 pantograph.input_handler = function (e) {
@@ -70,7 +102,7 @@ pantograph.redrawCanvas = function(mess, operation) {
 }
 
 pantograph.drawShape = function(shape) {
-	console.log(shape);
+	//console.log(shape);
 	var ctx = pantograph.hiddenContext;
 	var operation = pantograph.shapeToFunc[shape["type"]];
 	if (operation === undefined) {
