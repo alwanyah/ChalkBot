@@ -4,3 +4,5 @@ Software for the control of the ChalkBot - Semesterprojekt Mobile Roboter WS21/2
 
 * [GPS](gps/README.md)
 * [ChalkBotControl](ChalkBotControl/README.md)
+* [Simulator](Simulation/README.md)
+* [Canvas](canvas/README.md)
