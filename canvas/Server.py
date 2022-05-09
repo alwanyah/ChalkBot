@@ -2,10 +2,19 @@
 from http.server import SimpleHTTPRequestHandler, BaseHTTPRequestHandler
 import socketserver
 
-
+import os
+import sys
 import threading
 import traceback
 import json
+from time import sleep
+
+# HACK: add the path to the ChalkBot
+sys.path.append(os.path.join(os.path.dirname(__file__), '../ChalkBotControl'))
+
+from ChalkBot import ChalkBotHTTPClient
+from ChalkBot import ChalkBot
+
 
 PORT = 8800
 
@@ -65,6 +74,31 @@ class ChalkbotHandler(SimpleHTTPRequestHandler):
         self._set_headers()
         self.wfile.write(str(path).encode("utf8"))
     '''
+    
+    def sendToRobot(self, coordinates):
+        chalkbot = ChalkBotHTTPClient("127.0.0.1:8000")
+        #chalkbot = ChalkBot("10.0.4.99")
+    
+        for j in range(0, len(coordinates['coords'])):
+            # need to scale coordinates to make the drawing more visable
+            for i in range(0, len(coordinates['coords'][j])):
+                coordinates['coords'][j][i][0] *= 10
+                coordinates['coords'][j][i][1] *= 10
+
+        for j in range(0, len(coordinates['coords'])):
+            for i in range(0, len(coordinates['coords'][j])):
+                # need to wait until goto is done drawing
+                while (chalkbot.status() == "moving"):
+                    ...
+
+                # print("Going to x:", coordinates['coords'][0][i][0], ", y:", coordinates['coords'][0][i][1])
+                # move to first coordinate without drawing, draw the rest
+                if i == 0:
+                    chalkbot.goto(coordinates['coords'][j][i][0], coordinates['coords'][j][i][1], 0)
+                else:
+                    chalkbot.goto(coordinates['coords'][j][i][0], coordinates['coords'][j][i][1], 255)
+                # sleep for 50 ms because deltaTime in Simulation would be zero and thus divide by 0 and so no gotos are skipped
+                sleep(0.05)
 
     def do_HEAD(self):
         self._set_headers()
@@ -85,15 +119,22 @@ class ChalkbotHandler(SimpleHTTPRequestHandler):
             print(data)
             # parse json data
             msg = json.loads(data)
+            
+            
+            
+            # TODO: this is to remove the helpe ently from the directory. 
+            # There must be a better solution.
+            save_to_file = msg['file']
+            del msg['file']
 
             # do something with the data
-            if (msg['file'] == True):
-                del msg['file']
-                file = open("coords.json","w")
+            if save_to_file:
+                file = open("coords.json", "w")
                 file.write(json.dumps(msg))
                 file.close()
             else:
-                del msg['file']
+                self.sendToRobot(msg)
+                
             print(msg)
 
             result = "DONE!"
@@ -122,6 +163,6 @@ if __name__ == "__main__":
   server = ThreadedTCPServer(("", PORT), ChalkbotHandler)
   #server = ThreadedTCPServer(("", PORT), MyHandler)
 
-  print("Serving at port: {}".format(PORT))
+  print("Serving at: http://127.0.0.1:{}".format(PORT))
   server.serve_forever()
-  print("Stopped serving at port: {}".format(PORT))
+  print("Stopped serving: http://127.0.0.1:{}".format(PORT))
