@@ -51,6 +51,8 @@ def init():
     server = ThreadedTCPServer(("", PORT), SimulationHandler)
     server.logging = False
     threading.Thread(target=server.serve_forever).start()
+    print("The ChalkBot is running at the address: 127.0.0.1:{}".format(PORT))
+    
     # webbrowser.open('localhost:8080', new=2)
 
 def set_drive(parameters):
