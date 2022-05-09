@@ -11,6 +11,8 @@ import signal
 from collections import namedtuple
 import json
 
+import argparse
+
 
 robot = Robot.Robot()
 
@@ -113,18 +115,25 @@ def main():
     print("Ctrl+C to close Server")
     print("Press ESC to reset canvas and chalkbot.")
     print("----------------------------------")
-    factor = float(input("Set canvas size (default 1): "))
-    quick = float(input("Simulationmode normal : 0          quickmode : 1\n"))==1
-    radius = 10/factor
+    
+    # read the arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-s", "--size", help="canvas size", type=float, default=1)
+    parser.add_argument("-q", "--quick", help="enable the quick simulation mode.")
+    args = parser.parse_args()
+    
+    print("Set canvas size to {} (default 1)".format(args.size))
+    print("Simulationmode set to '{}' (default 'normal')".format('quick' if args.quick else 'normal'))
+    
+    radius = 10/args.size
     offset = [30/factor, 20/factor]
-
 
     with open("config.json", "r") as jsonFile:
         data = json.load(jsonFile)
 
         updatePeriod = data["timer_interval"] # milliseconds
 
-        if (quick):
+        if (args.quick):
             data["timer_interval"] = 1.0
 
             with open("config.json", "w") as jsonFile:
