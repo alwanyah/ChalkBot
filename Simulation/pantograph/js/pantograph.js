@@ -21,57 +21,47 @@ pantograph.chalkCanvas.height = canvas.height;
 pantograph.chalkContext = pantograph.chalkCanvas.getContext("2d");
 
 //this is for saving the coords of the chalkbotdrawing:
-var chalk_drawing = [];
 
 pantograph.reset = function(ctx) {
-	chalk_drawing = [];
-  
+  // clear the chalkContext
+  pantograph.chalkContext.clearRect(0, 0, canvas.width, canvas.height);
+
+  // clear the regular context
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-var density = 40;
+
 function getRandomFloat(min, max) {
   return Math.random() * (max - min) + min;
 }
 
-pantograph.saveChalk = function(ctx, circle) {
-	//chalk_drawing.push(circle);
-  
-  //pantograph.drawCircle(pantograph.chalkContext, circle);
+pantograph.saveChalk = function(ctx, brush) {
+  // debug
+  //console.log(brush)
+
+  // hack: draw to the chalk context
   ctx = pantograph.chalkContext;
   
-  ctx.lineJoin = ctx.lineCap = 'round';
+	if (brush.color) {
+		ctx.fillStyle = brush.color;
+		ctx.fill();
+	}
   
-  for (var i = density; i--; ) {
+  ctx.lineJoin = ctx.lineCap = 'round';
+  // randomized brush
+  for (var i = brush.density; i--; ) {
     var angle = getRandomFloat(0, Math.PI * 2);
-    var radius = getRandomFloat(0, circle.radius);
+    var radius = getRandomFloat(0, brush.radius);
     ctx.globalAlpha = Math.random();
     ctx.fillRect(
-      circle.x + radius * Math.cos(angle),
-      circle.y + radius * Math.sin(angle), 
+      brush.x + radius * Math.cos(angle),
+      brush.y + radius * Math.sin(angle), 
       getRandomFloat(1, 2), getRandomFloat(1, 2));
   }
-  
 }
 
 pantograph.drawBrush = function(ctx) {
   ctx.drawImage(pantograph.chalkCanvas, 0, 0);
-  /*
-	for (var i = 0; i < chalk_drawing.length; i+=1) {
-		var circle = chalk_drawing[i];
-		console.log(circle);
-		ctx.beginPath();
-		ctx.arc(circle.x, circle.y, circle.radius, 0, 2 * Math.PI, true);
-		if (circle.lineColor) {
-			ctx.strokeStyle = circle.lineColor;
-			ctx.stroke();
-		}
-		if (circle.fillColor) {
-			ctx.fillStyle = circle.fillColor;
-			ctx.fill();
-		}
-	}
-  */
 }
 
 pantograph.input_handler = function (e) {

@@ -1,53 +1,17 @@
-import sys
-import pantograph
-import random
-import math
-import itertools
-from datetime import datetime
-import CommandServer
-import Robot
-import gc
+#!/usr/bin/env python3
+
 import signal
-from collections import namedtuple
 import json
-
+import tornado
+from pantograph import PantographHandler, SimplePantographApplication, Image
+from CommandServer import CommandServerThread
+from Robot import Robot
 import argparse
+#import webbrowser
 
-
-robot = Robot.Robot()
-
-factor = 1
-
-dots = []
-radius = 10/factor
-offset = [30/factor, 20/factor]             # dont move the paint, move the robot image
-
-reset = False
-
-quick = False
-
-t = 0             # Simulationtime in Milliseconds
-
-updatePeriod = 30
-#print(updatePeriod)
-
-robot_ticks = 5   # amount of updates the robot will clalculate per frame
-
-def signal_handler(sig, frame):
-    if (quick):
-        with open("config.json", "r") as jsonFile:
-            data = json.load(jsonFile)
-
-        data["timer_interval"] = updatePeriod
-
-        with open("config.json", "w") as jsonFile:
-            json.dump(data, jsonFile)
-
-    CommandServer.close()
-    print("\nClosing Server!")
-    sys.exit()
-
-signal.signal(signal.SIGINT, signal_handler)
+COMMAND_SERVER_PORT = 8000
+PANTHOGRAPH_SERVER_PORT = 8080
+PHYSICS_TIME_STEP = 6.0 # the update cycle of the physical simulation in ms
 
 # This class represents the shape of the robot, moving on the simulation canvas.
 # The metrics used by Robot.py are based on the real ChalkBot and the coordinates are in mm.
@@ -55,103 +19,110 @@ signal.signal(signal.SIGINT, signal_handler)
 # thus we transform the robot coordinates to the simulation coordinates by dividing with 10
 # as well as dividing by our adjustable 'factor' parameter,
 # which is to determine the scale of the simulation.
-class ChalkBot(object):
-    def __init__(self):
-        self.shape = pantograph.Image("tutrobot.png",robot.x/(10*factor), robot.y/(10*factor), 60/factor, 40/factor)
-        self.theta = robot.theta
-
-    def update(self, canvas):
-
-        global t, dots, reset
-
-        if (reset):
-            canvas.draw("reset")
-            reset = False
-
-        for i in range(robot_ticks):
-            robot.update(t)
-            t += updatePeriod/robot_ticks
-            if robot.p_pwm:
-                canvas.draw("save", x=robot.x/(10*factor), y=robot.y/(10*factor), radius=radius, lineColor="#f00")
-            CommandServer.t = t
-        
-        #for dot in dots:
-            #pantograph.Circle(dot[0]/10*factor, dot[1]/10*factor, radius, "#f00").draw(canvas)
-            #canvas.fill_circle(dot[0], dot[1], radius, color="#f00")
-        #   canvas.draw("brush", x=dot[0]/10*factor, y=dot[1]/10*factor, radius=radius, lineColor="#f00")
-
-        self.shape.x = robot.x/(10*factor) - offset[0]
-        self.shape.y = robot.y/(10*factor) - offset[1]
-
-        self.shape.rotate(robot.theta)
-
-        if (not quick or robot.status_motion=="stopped"):
-            canvas.draw("brush")
-            self.shape.draw(canvas)
-
-class ChalkBotSimulation(pantograph.PantographHandler):
-    def setup(self):
-        self.xvel = 0
-        self.yvel = 0
-        self.chalkbot = ChalkBot()
+class SimulationHandler(PantographHandler):
+    # pylint: disable=abstract-method # Method 'data_received' is abstract in class 'RequestHandler' but is not overridden
 
     def update(self):
         self.clear_rect(0, 0, self.width, self.height)
-        self.chalkbot.update(self)
+        
+        # simulate
+        # target time for the physical simulation in this rendering step
+        t = self.application.timestamp + self.application.update_period
+        while self.application.timestamp < t:
+            self.application.robot.update(self.application.timestamp)
+            self.application.timestamp += PHYSICS_TIME_STEP
+            
+            # printer is active
+            if self.application.robot.p_pwm > 0:
+                # draw with chalk in the background buffer
+                self.draw(
+                    "save",
+                    x = self.application.robot.x / (10 * self.application.factor),
+                    y = self.application.robot.y / (10 * self.application.factor),
+                    radius=self.application.radius,
+                    density = 40,
+                    color="#000"
+                )
+
+        # calculate robots positon 
+        self.application.shape.x = self.application.robot.x / (10 * self.application.factor) - self.application.offset[0]
+        self.application.shape.y = self.application.robot.y / (10 * self.application.factor) - self.application.offset[1]
+        self.application.shape.rotate(self.application.robot.theta)
+
+        # render the scene
+        self.draw("brush")
+        self.application.shape.draw(self)
 
     def on_key_down(self, event):
-        global dots, robot, t, reset
-        if event.key_code == 27:
-            reset = True
-            t = 0
-            dots = []
-            robot = Robot.Robot()
-            CommandServer.reset()
+        if event.key_code == 27: # ESC (TODO: find where key codes are defined)
+            # don't create a new object here because the reference is shared with the command server
+            self.application.robot.reset()
+            # reset canvas
+            self.draw("reset")
 
+
+class Simulation(SimplePantographApplication):
+    def __init__(self, factor, update_period):
+        super().__init__(SimulationHandler)
+        
+        brush_radius = 10
+        robot_width  = 40
+        robot_length = 60
+        
+        # scale all sizes
+        self.factor = factor
+        self.radius = brush_radius / factor # radus for the brush
+        self.offset = [robot_length/2/factor, robot_width/2/factor]  # don't move the paint, move the robot image
+        self.shape  = Image("tutrobot.png", 0, 0, robot_length/factor, robot_width/factor)
+        
+        # the update time for the rendering is used internaly by Pantograph
+        self.update_period = update_period
+        self.timestamp = 0  # Simulationtime in Milliseconds
+        self.robot = Robot()
 
 
 def main():
-    global factor, radius, offset, updatePeriod
-    print("Ctrl+C to close Server")
-    print("Press ESC to reset canvas and chalkbot.")
-    print("----------------------------------")
-    
     # read the arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--size", help="canvas size", type=float, default=1)
-    parser.add_argument("-q", "--quick", help="enable the quick simulation mode.")
+    parser.add_argument("-q", "--quick", help="enable the quick simulation mode.", action="store_true")
     args = parser.parse_args()
-    
+
+    # print status of used parameters
+    print("Ctrl+C to close Server")
+    print("Press ESC to reset the canvas.")
+    print("----------------------------------")
     print("Set canvas size to {} (default 1)".format(args.size))
     print("Simulationmode set to '{}' (default 'normal')".format('quick' if args.quick else 'normal'))
+
+    with open("config.json", "rb") as json_file:
+        data = json.load(json_file)
+
+    # time interval for the rendering
+    update_period = data["timer_interval"]  # milliseconds
+    if (args.quick):
+        update_period = 1000.0 # render once in a second
+    print("Update Period {}".format(update_period))
+
+
+    app = Simulation(factor = args.size, update_period = update_period)
+    server = CommandServerThread(app.robot, ("", COMMAND_SERVER_PORT), False)
+    server.start()
+
+    def signal_handler(_sig, _frame):
+        print("\nClosing Server!")
+        server.stop()
+        tornado.ioloop.IOLoop.instance().stop()
+
+    signal.signal(signal.SIGINT, signal_handler)
+
+    # automatically open webbrowser
+    #webbrowser.open('http://127.0.0.1:{}'.format(PANTHOGRAPH_SERVER_PORT), new=2)
     
-    radius = 10/args.size
-    offset = [30/factor, 20/factor]
-
-    with open("config.json", "r") as jsonFile:
-        data = json.load(jsonFile)
-
-        updatePeriod = data["timer_interval"] # milliseconds
-
-        if (args.quick):
-            data["timer_interval"] = 1.0
-
-            with open("config.json", "w") as jsonFile:
-                json.dump(data, jsonFile)
-
-
-
-
-    CommandServer.init()
-    print("==================================")
-    app = pantograph.SimplePantographApplication(ChalkBotSimulation)
     #print(app.constr_args)
-    app.run()
+    app.run(port=PANTHOGRAPH_SERVER_PORT)
+    
     
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-
-
-

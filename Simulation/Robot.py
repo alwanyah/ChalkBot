@@ -1,76 +1,80 @@
-from __future__ import print_function
-import sys
-import pantograph
-import random
 import math
-import itertools
-from datetime import datetime
-import CommandServer
-import time
 import numpy as np
-#
-#import threading
-#import traceback
-#import json
 
-#
+
 # Multipliers: multiply with the corresponding pwm to calculate the movement.
 
-v_max = 5   # m/second, which equals 18km/h
-v_factor = v_max / 255
+V_MAX = 5   # m/second, which equals 18km/h
+V_FACTOR = V_MAX / 255
 
-r_max = math.pi # radians per Second
-r_factor = (1 / 255) * (r_max/1000) # max rotational velosity of 180° per Second
+R_MAX = math.pi # radians per Second
+R_FACTOR = (1 / 255) * (R_MAX/1000) # max rotational velocity of 180° per Second
 
-class Robot(object):
+
+class Robot:
     def __init__(self):
-        self.x = 1000
-        self.y = 1000
-        self.theta = 0
-        self.t = 0
+        self.x = 1000 # mm north
+        self.y = 1000 # mm west
+        self.theta = 0 # rad counterclockwise
+        self.t = 0 # ms timestamp
 
-        self.r_pwm = 0
-        self.v_pwm = 0
-        self.p_pwm = 0
+        self.r_pwm = 0 # 0 to 255, rotation speed (counterclockwise)
+        self.v_pwm = 0 # 0 to 255, forward (vorward?) speed
+        self.p_pwm = 0 # 0 to 255, print speed
 
+        self.last_command = None
+        self.time_of_last_command = self.t
+
+        self.drive_request = [0,0,0,0] # v, r, p, t
         self.status_motion = "stopped"
+        self.goto_point = [0,0,0] # x, y, p
 
-    def setVelocitySmooth(self, v, r):
-        self.v_pwm = 0
-        self.r_pwm = 0
+    def reset(self):
+        self.__init__()
+
+    # def reset(self):
+    #     self.last_command = None
+    #     self.t = 0
+    #     self.time_of_last_command = self.t
+
+    #     self.drive_request = [0,0,0,0]
+    #     self.status_motion = "stopped"
+    #     self.goto_point = [0,0,0]
+
+    #     self.pose = [0,0]
+    #     self.orientation = 0
+
+    def set_velocity_smooth(self, v, r):
+        self.v_pwm = v
+        self.r_pwm = r
 
     def update(self, t):
-
-        timeDelta = t - self.t
+        time_delta = t - self.t
         self.t = t
-        time_since_last_command = self.t - CommandServer.timeOfLastCommand
+        time_since_last_command = self.t - self.time_of_last_command
 
-        if (CommandServer.lastCommand=="drive" and (time_since_last_command < CommandServer.driveRequest[3])):
-
-            self.v_pwm = CommandServer.driveRequest[0]
-            self.r_pwm = CommandServer.driveRequest[1]
-            self.p_pwm = CommandServer.driveRequest[2] > 0
+        if self.last_command == "drive" and time_since_last_command < self.drive_request[3]:
+            self.v_pwm = self.drive_request[0]
+            self.r_pwm = self.drive_request[1]
+            self.p_pwm = self.drive_request[2]
             self.status_motion = "moving"
 
-        elif (CommandServer.lastCommand=="goto"):
-
-            xrel = (CommandServer.goto_point[0]-self.x)*math.cos(self.theta) + (CommandServer.goto_point[1]-self.y)*math.sin(self.theta)
-            yrel = -(CommandServer.goto_point[0]-self.x)*math.sin(self.theta) + (CommandServer.goto_point[1]-self.y)*math.cos(self.theta)
+        elif self.last_command == "goto":
+            xrel = (self.goto_point[0]-self.x)*math.cos(self.theta) + (self.goto_point[1]-self.y)*math.sin(self.theta)
+            yrel = -(self.goto_point[0]-self.x)*math.sin(self.theta) + (self.goto_point[1]-self.y)*math.cos(self.theta)
 
             distance = math.sqrt(xrel*xrel + yrel*yrel)
             angle = -np.arctan2(yrel, xrel)
-            self.p_pwm = CommandServer.goto_point[2]
+            self.p_pwm = self.goto_point[2]
 
-            maxDistanceError = timeDelta*2
-            maxAngleError = timeDelta/1000
+            max_distance_error = time_delta*2
+            max_angle_error = time_delta/1000
 
-            if distance > maxDistanceError:                 #
-
-                # turn on the spot
-                if abs(angle) > maxAngleError:
+            if distance > max_distance_error:
+                if abs(angle) > max_angle_error:
                     self.v_pwm = 0
                     self.r_pwm = angle/abs(angle) * 255
-                    if angle/maxAngleError < 2:
+                    if angle/max_angle_error < 2:
                         self.r_pwm = self.r_pwm/2
                     # don't print when turning on the spot
                     self.p_pwm = 0
@@ -78,20 +82,19 @@ class Robot(object):
                 else:
                     self.v_pwm = 255   #  255 is the max pwm
                     self.r_pwm = 0
-                    if distance/maxDistanceError < 2:
+                    if distance/max_distance_error < 2:
                         self.v_pwm = self.v_pwm /2
-                        
-                self.status_motion = "moving"
 
+                self.status_motion = "moving"
 
             else:
                 self.p_pwm = 0
-                self.setVelocitySmooth(0,0)
+                self.set_velocity_smooth(0,0)
                 self.status_motion = "stopped"
 
         else:
             self.p_pwm = 0
-            self.setVelocitySmooth(0,0)
+            self.set_velocity_smooth(0,0)
             self.status_motion = "stopped"
 
         #behavior
@@ -99,40 +102,16 @@ class Robot(object):
         # We assume a max velocity of the original ChalkBot of 5 m/s = 5 mm/ms
         # To get the Velocity, we also normalize the pwm.
 
-        velocity = self.v_pwm * v_factor
+        velocity = self.v_pwm * V_FACTOR
 
         xvel = math.cos(self.theta) * velocity
         yvel = math.sin(self.theta) * velocity
 
-        self.x += timeDelta * xvel
-        self.y += timeDelta * yvel
+        self.x += time_delta * xvel
+        self.y += time_delta * yvel
 
-        rvel = self.r_pwm * r_factor
+        rvel = self.r_pwm * R_FACTOR
 
-        self.theta -= rvel * timeDelta
+        self.theta -= rvel * time_delta
         if self.theta > math.pi:
             self.theta -= 2 * math.pi
-
-        CommandServer.pose = [self.x, self.y]
-        CommandServer.orientation = self.theta
-        CommandServer.status_motion = self.status_motion
-        #CommandServer.t = self.t
-
-
-
-"""
-if __name__ == '__main__':
-    robot = Robot()
-    print(CommandServer.timeOfLastCommand)
-    print(CommandServer.lastCommand)
-    time.sleep(10)
-    print(CommandServer.timeOfLastCommand)
-    print(CommandServer.lastCommand)
-    time.sleep(10)
-    print(CommandServer.timeOfLastCommand)
-    print(CommandServer.lastCommand)
-"""
-
-
-
-
