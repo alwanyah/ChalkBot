@@ -79,26 +79,25 @@ class ChalkbotHandler(SimpleHTTPRequestHandler):
         chalkbot = ChalkBotHTTPClient("127.0.0.1:8000")
         #chalkbot = ChalkBot("10.0.4.99")
     
-        for j in range(0, len(coordinates['coords'])):
-            # need to scale coordinates to make the drawing more visable
-            for i in range(0, len(coordinates['coords'][j])):
-                coordinates['coords'][j][i][0] *= 10
-                coordinates['coords'][j][i][1] *= 10
+        scale = 10.0
+        # there can be several traces
+        for trace in coordinates['coords']:
+            # don't print when approaching the first point of the trace
+            do_print = 0
 
-        for j in range(0, len(coordinates['coords'])):
-            for i in range(0, len(coordinates['coords'][j])):
+            for point in trace:
                 # need to wait until goto is done drawing
                 while (chalkbot.status() == "moving"):
-                    ...
-
-                # print("Going to x:", coordinates['coords'][0][i][0], ", y:", coordinates['coords'][0][i][1])
-                # move to first coordinate without drawing, draw the rest
-                if i == 0:
-                    chalkbot.goto(coordinates['coords'][j][i][0], coordinates['coords'][j][i][1], 0)
-                else:
-                    chalkbot.goto(coordinates['coords'][j][i][0], coordinates['coords'][j][i][1], 255)
+                    sleep(0.05)
+                    
+                # TODO: use goto_blocking
+                chalkbot.goto(point[0]*scale, point[1]*scale, do_print)
+                
+                # print all following points
+                do_print = 255
                 # sleep for 50 ms because deltaTime in Simulation would be zero and thus divide by 0 and so no gotos are skipped
                 sleep(0.05)
+
 
     def do_HEAD(self):
         self._set_headers()
