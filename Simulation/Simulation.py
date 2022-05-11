@@ -40,7 +40,7 @@ class SimulationHandler(PantographHandler):
                     x = self.application.robot.x / (10 * self.application.factor),
                     y = self.application.robot.y / (10 * self.application.factor),
                     radius=self.application.radius,
-                    density = 40,
+                    density = 10,
                     color="#000"
                 )
 
